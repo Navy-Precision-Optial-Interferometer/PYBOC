@@ -29,6 +29,7 @@ frame = Frame( window)
 bottomframe = Frame(window)
 buttonframe = Frame(window)
 star_offset_frame = Frame(window)
+buttonframe2 = Frame(window)
 plot_frame = Frame(window)
 
 files = []
@@ -225,6 +226,16 @@ def import_logs():
                 b4_dict[star].append(b4[i])
                 b5_dict[star].append(b5[i])
                 angles_dict[star].append(angles[i])
+                
+    # calculate polynomial fits
+    global polydict
+    polydict = {star: [] for star in unique_stars}
+    for star in unique_stars:
+        polydict[star].append(np.polyfit(angles_dict[star], b1_dict[star],2))
+        polydict[star].append(np.polyfit(angles_dict[star], b2_dict[star],2))
+        polydict[star].append(np.polyfit(angles_dict[star], b3_dict[star],2))
+        polydict[star].append(np.polyfit(angles_dict[star], b4_dict[star],2))
+        polydict[star].append(np.polyfit(angles_dict[star], b5_dict[star],2))
      
     dropdown_stars['menu'].delete(0,'end')
     for star in unique_stars:
@@ -235,21 +246,20 @@ def clear_selection():
     listbox2.delete(0, 'end')
   
 # the figure that will contain the plot
-fig = Figure(figsize=(6,5), dpi=100)
+fig = Figure(figsize=(8,5), dpi=100)
 
 # creating the Tkinter canvas
 # containing the Matplotlib figure
 canvas = FigureCanvasTkAgg(fig, master = plot_frame)
 
 # placing the canvas on the Tkinter window
-canvas.get_tk_widget().pack(side=BOTTOM,pady=15,fill='both')
 canvas.get_tk_widget().configure(highlightbackground='black',highlightthickness=2)
   
 def plot_offsets():
 
     fig.clear()
+    global plot1
     plot1 = fig.add_subplot(111)
-    #plot1.axis('off')
 
     baselines = selected_baselines()
     star = starvar.get()
@@ -268,37 +278,60 @@ def plot_offsets():
     if 5 in baselines:
         plot1.scatter(angles_dict[star], b5_dict[star], label='b5',c='pink')    
     
-    #ax.scatter(angles_dict[my_star], b1_dict[my_star], label='AC-AE, y=%.4fx^2 + %.4fx + %.4f' % (polydict[my_star][0][0], polydict[my_star][0][1], polydict[my_star][0][2]),c='lime')
-    #ax.scatter(angles_dict[my_star], b4_dict[my_star], label='E6-AE, y=%.4fx^2 + %.4fx + %.4f' % (polydict[my_star][1][0], polydict[my_star][1][1], polydict[my_star][1][2]),c='b')
     
-    # Plot the polynomial fit for each baseline
-    #xs=np.linspace(np.amin(angles_dict[my_star]) - 0.5, np.amax(angles_dict[my_star]) + 0.5, 1000)
-    #ax.plot(xs, (polydict[my_star][0][0] * (xs**2)) + (polydict[my_star][0][1]* xs) + polydict[my_star][0][2],c='lime')
-    #ax.plot(xs, (polydict[my_star][1][0] * (xs**2)) + (polydict[my_star][1][1]* xs) + polydict[my_star][1][2],c='b')
-    
+    ylims = plot1.axes.get_ylim()
     # Other plot setup
-    plot1.set_ylim([0,3])
+    plot1.set_ylim([ylims[0]-0.5, ylims[1]+0.5])
+    plot1.set_xlim([np.amin(angles_dict[star]) - 0.75,np.amax(angles_dict[star]) + 0.75])
     plot1.set_title(star,fontsize=12)
     plot1.set_ylabel('Baseline Offset (mm)',fontsize=12)
     plot1.set_xlabel('Hour Angle', fontsize=12)
     plot1.axes.tick_params(labelsize=10)
-    plot1.axes.legend(fontsize=10)
-    #plot1.axis('on')
+    global leg
+    leg = plot1.axes.legend(fontsize=10,loc='upper left')
     
     canvas.draw()
-        
+    
+def plot_fits():
+    baselines = selected_baselines()
+    star = starvar.get()
+    xs=np.linspace(np.amin(angles_dict[star]) - 0.5, np.amax(angles_dict[star]) + 0.5, 1000)
+    
+    # Scatter plot the hour angles and offsets for the star
+    leg_text = leg.get_texts()
+    leg_text_strings = [leg.get_texts()[i].get_text() for i in range(len(leg.get_texts()))]
+    print(leg_text)
+    if 1 in baselines:
+        leg_text[leg_text_strings.index('b1')].set_text('b1, y=%.4fx^2 + %.4fx + %.4f' % (polydict[star][0][0], polydict[star][0][1], polydict[star][0][2]))
+        plot1.plot(xs, (polydict[star][0][0] * (xs**2)) + (polydict[star][0][1]* xs) + polydict[star][0][2],c='lime')
+    if 2 in baselines:
+        leg_text[leg_text_strings.index('b2')].set_text('b2, y=%.4fx^2 + %.4fx + %.4f' % (polydict[star][1][0], polydict[star][1][1], polydict[star][1][2]))
+        plot1.plot(xs, (polydict[star][1][0] * (xs**2)) + (polydict[star][1][1]* xs) + polydict[star][1][2],c='red')
+    if 3 in baselines:
+        leg_text[leg_text_strings.index('b3')].set_text('b3, y=%.4fx^2 + %.4fx + %.4f' % (polydict[star][2][0], polydict[star][2][1], polydict[star][2][2]))
+        plot1.plot(xs, (polydict[star][2][0] * (xs**2)) + (polydict[star][2][1]* xs) + polydict[star][2][2],c='orange')
+    if 4 in baselines:
+        leg_text[leg_text_strings.index('b4')].set_text('b4, y=%.4fx^2 + %.4fx + %.4f' % (polydict[star][3][0], polydict[star][3][1], polydict[star][3][2]))
+        plot1.plot(xs, (polydict[star][3][0] * (xs**2)) + (polydict[star][3][1]* xs) + polydict[star][3][2],c='blue')
+    if 5 in baselines:
+        leg_text[leg_text_strings.index('b5')].set_text('b5, y=%.4fx^2 + %.4fx + %.4f' % (polydict[star][4][0], polydict[star][4][1], polydict[star][4][2]))
+        plot1.plot(xs, (polydict[star][4][0] * (xs**2)) + (polydict[star][4][1]* xs) + polydict[star][4][2],c='magenta') 
 
+    canvas.draw()       
+    
     
 import_button = Button(buttonframe, text = 'Import Logs', command=import_logs, width=15)
 clear_button = Button(buttonframe, text = 'Clear Selection', command=clear_selection,width=15)
-plot_button = Button(plot_frame, text = 'Plot Offsets', command=plot_offsets,width=15)
-
+plot_button = Button(buttonframe2, text = 'Plot Offsets', command=plot_offsets,width=15)
+plotfit_button = Button(buttonframe2, text = 'Plot Fits',command=plot_fits,width=15)
 #btn.pack( side = RIGHT , padx = 5 )
 #listbox_year.pack( side = LEFT )
 #listbox2.pack(side= LEFT,padx=20)
 frame.pack(side=TOP,padx = 10, pady = 5, expand=True)
 buttonframe.pack(side=TOP,pady=5)
 bottomframe.pack(side=TOP, pady=15)
+star_offset_frame.pack(side=TOP, pady=5)
+buttonframe2.pack(side=TOP, pady=5)
 plot_frame.pack(side=TOP)
 dropdown_year.pack(side=LEFT, fill='x',padx=5)
 dropdown_months.pack(side=LEFT, fill='x',padx=5)
@@ -310,16 +343,19 @@ listbox2.pack(side=LEFT)
 import_button.pack(side=LEFT,fill='both',expand=True,padx=5)
 clear_button.pack(side=LEFT,fill='both',expand=True,padx=5)
 dropdown_stars.pack(side=LEFT, fill='x', padx=5)
-R1.pack(side=LEFT)
+R1.pack(side=LEFT,pady=5)
 R2.pack(side=LEFT)
 R3.pack(side=LEFT)
 R4.pack(side=LEFT)
 R5.pack(side=LEFT)
-plot_button.pack(side=TOP)
+plot_button.pack(side=LEFT,padx=5)
+plotfit_button.pack(side=LEFT,padx=5)
+canvas.get_tk_widget().pack(side=BOTTOM,pady=15,fill='both')
 
 
 dropdown_year.config(width=12)
 dropdown_year2.config(width=12)
 dropdown_months.config(width=12)
 dropdown_months2.config(width=12)
+dropdown_stars.config(width=10)
 window.mainloop()
