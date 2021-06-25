@@ -29,6 +29,7 @@ frame = Frame( window)
 bottomframe = Frame(window)
 buttonframe = Frame(window)
 star_offset_frame = Frame(window)
+calc_offset_frame = Frame(window)
 buttonframe2 = Frame(window)
 plot_frame = Frame(window)
 
@@ -73,7 +74,7 @@ bvar4 = IntVar(star_offset_frame)
 bvar5 = IntVar(star_offset_frame)
 
 starvar = StringVar(star_offset_frame)
-starvar.set('Pick a star')
+starvar.set('Pick a Star')
 
 dropdown_stars = OptionMenu(star_offset_frame,starvar,*unique_stars)
 
@@ -100,8 +101,10 @@ dropdown_months = OptionMenu(frame, monthvar, *months)
 dropdown_year2 = OptionMenu(frame, yearvar2, *years)
 dropdown_months2 = OptionMenu(frame, monthvar2, *months)
 
-listbox = Listbox(bottomframe, width=35, height=10, selectmode='extended')
-listbox2 = Listbox(bottomframe,width=35, height=10)
+listbox = Listbox(bottomframe, width=50, height=8, selectmode='extended')
+listbox2 = Listbox(bottomframe,width=50, height=8)
+
+
 
 def show_date(*args):
 
@@ -168,6 +171,15 @@ listbox.bind('<<ListboxSelect>>', onselect_logs)
     
 
 def import_logs():
+    starvar.set('Pick a Star')
+    b1_offset.configure(text="b1: -1.000")
+    b2_offset.configure(text="b2: -1.000")
+    b3_offset.configure(text="b3: -1.000")
+    b4_offset.configure(text="b4: -1.000")
+    b5_offset.configure(text="b5: -1.000")
+    ha_var.set('Hour Angle')
+    
+    
     starlogs = list(listbox2.get(0,'end'))
     data = []
 
@@ -246,7 +258,7 @@ def clear_selection():
     listbox2.delete(0, 'end')
   
 # the figure that will contain the plot
-fig = Figure(figsize=(8,5), dpi=100)
+fig = Figure(figsize=(6,4.5), dpi=100)
 
 # creating the Tkinter canvas
 # containing the Matplotlib figure
@@ -276,7 +288,7 @@ def plot_offsets():
     if 4 in baselines:
         plot1.scatter(angles_dict[star], b4_dict[star], label='b4',c='blue')
     if 5 in baselines:
-        plot1.scatter(angles_dict[star], b5_dict[star], label='b5',c='pink')    
+        plot1.scatter(angles_dict[star], b5_dict[star], label='b5',c='magenta')    
     
     
     ylims = plot1.axes.get_ylim()
@@ -303,54 +315,106 @@ def plot_fits():
     print(leg_text)
     if 1 in baselines:
         leg_text[leg_text_strings.index('b1')].set_text('b1, y=%.4fx^2 + %.4fx + %.4f' % (polydict[star][0][0], polydict[star][0][1], polydict[star][0][2]))
-        plot1.plot(xs, (polydict[star][0][0] * (xs**2)) + (polydict[star][0][1]* xs) + polydict[star][0][2],c='lime')
+        plot1.plot(xs, poly_calc(polydict[star][0][0], polydict[star][0][1], polydict[star][0][2], xs),c='lime')
     if 2 in baselines:
         leg_text[leg_text_strings.index('b2')].set_text('b2, y=%.4fx^2 + %.4fx + %.4f' % (polydict[star][1][0], polydict[star][1][1], polydict[star][1][2]))
-        plot1.plot(xs, (polydict[star][1][0] * (xs**2)) + (polydict[star][1][1]* xs) + polydict[star][1][2],c='red')
+        plot1.plot(xs, poly_calc(polydict[star][1][0], polydict[star][1][1], polydict[star][1][2], xs),c='red')
     if 3 in baselines:
         leg_text[leg_text_strings.index('b3')].set_text('b3, y=%.4fx^2 + %.4fx + %.4f' % (polydict[star][2][0], polydict[star][2][1], polydict[star][2][2]))
-        plot1.plot(xs, (polydict[star][2][0] * (xs**2)) + (polydict[star][2][1]* xs) + polydict[star][2][2],c='orange')
+        plot1.plot(xs, poly_calc(polydict[star][2][0], polydict[star][2][1], polydict[star][2][2], xs),c='orange')
     if 4 in baselines:
         leg_text[leg_text_strings.index('b4')].set_text('b4, y=%.4fx^2 + %.4fx + %.4f' % (polydict[star][3][0], polydict[star][3][1], polydict[star][3][2]))
-        plot1.plot(xs, (polydict[star][3][0] * (xs**2)) + (polydict[star][3][1]* xs) + polydict[star][3][2],c='blue')
+        plot1.plot(xs, poly_calc(polydict[star][3][0], polydict[star][3][1], polydict[star][3][2], xs),c='blue')
     if 5 in baselines:
         leg_text[leg_text_strings.index('b5')].set_text('b5, y=%.4fx^2 + %.4fx + %.4f' % (polydict[star][4][0], polydict[star][4][1], polydict[star][4][2]))
-        plot1.plot(xs, (polydict[star][4][0] * (xs**2)) + (polydict[star][4][1]* xs) + polydict[star][4][2],c='magenta') 
+        plot1.plot(xs, poly_calc(polydict[star][4][0], polydict[star][4][1], polydict[star][4][2], xs),c='magenta') 
 
-    canvas.draw()       
+    canvas.draw()
     
+def poly_calc(a, b, c, x):
+    return (a * x**2) + (b*x) + c
+
+ha_var = StringVar(buttonframe2)
+ha_var.set('Hour Angle')
+b1_offset = Label(buttonframe2,text="b1: -1.000",width=10,bg='lime',fg='black',bd=3,relief='raised')
+b2_offset = Label(buttonframe2,text="b2: -1.000",width=10,bg='red',fg='black',bd=3,relief='raised')
+b3_offset = Label(buttonframe2,text="b3: -1.000",width=10,bg='orange',fg='black',bd=3,relief='raised')
+b4_offset = Label(buttonframe2,text="b4: -1.000",width=10,bg='blue',fg='white',bd=3,relief='raised')
+b5_offset = Label(buttonframe2,text="b5: -1.000",width=10,bg='magenta',fg='black',bd=3,relief='raised')
+
+def calculate_offsets(*args):
+    hour_angle = float(ha_var.get())
+    print(hour_angle)
+    star = starvar.get()
     
-import_button = Button(buttonframe, text = 'Import Logs', command=import_logs, width=15)
-clear_button = Button(buttonframe, text = 'Clear Selection', command=clear_selection,width=15)
+    b1_offset.configure(text='b1: %.3f' % poly_calc(polydict[star][0][0],polydict[star][0][1],polydict[star][0][2],hour_angle))
+    b2_offset.configure(text='b2: %.3f' % poly_calc(polydict[star][1][0],polydict[star][1][1],polydict[star][1][2],hour_angle))
+    b3_offset.configure(text='b3: %.3f' % poly_calc(polydict[star][2][0],polydict[star][2][1],polydict[star][2][2],hour_angle))
+    b4_offset.configure(text='b4: %.3f' % poly_calc(polydict[star][3][0],polydict[star][3][1],polydict[star][3][2],hour_angle))
+    b5_offset.configure(text='b5: %.3f' % poly_calc(polydict[star][4][0],polydict[star][4][1],polydict[star][4][2],hour_angle))
+
+def ha_focus(event):
+    ha_var.set('')
+    ha_entry_box.focus_set()
+
+def ha_outfocus(event):
+    ha_var.set('Hour Angle')
+
+    
+ha_entry_box = Entry(buttonframe2,textvariable=ha_var,width=15)
+
+ha_entry_box.bind("<Return>", calculate_offsets)
+ha_entry_box.bind("<FocusIn>", ha_focus)
+ha_entry_box.bind("<FocusOut>", ha_outfocus)
+    
+import_button = Button(frame, text = 'Import Logs', command=import_logs, width=15)
+clear_button = Button(frame, text = 'Clear Selection', command=clear_selection,width=15)
 plot_button = Button(buttonframe2, text = 'Plot Offsets', command=plot_offsets,width=15)
 plotfit_button = Button(buttonframe2, text = 'Plot Fits',command=plot_fits,width=15)
 #btn.pack( side = RIGHT , padx = 5 )
 #listbox_year.pack( side = LEFT )
 #listbox2.pack(side= LEFT,padx=20)
-frame.pack(side=TOP,padx = 10, pady = 5, expand=True)
-buttonframe.pack(side=TOP,pady=5)
-bottomframe.pack(side=TOP, pady=15)
-star_offset_frame.pack(side=TOP, pady=5)
-buttonframe2.pack(side=TOP, pady=5)
-plot_frame.pack(side=TOP)
-dropdown_year.pack(side=LEFT, fill='x',padx=5)
-dropdown_months.pack(side=LEFT, fill='x',padx=5)
-dropdown_year2.pack(side=LEFT, fill='x',padx=5)
-dropdown_months2.pack(side=LEFT, fill='x',padx=5)
+frame.configure(highlightbackground='black',highlightthickness='2',padx=20,pady=40)
+frame.grid(row=0, rowspan=2, column=0)
+dropdown_year.grid(row=0,column=0,pady=5)
+dropdown_months.grid(row=1,column=0)
+dropdown_year2.grid(row=2,column=0)
+dropdown_months2.grid(row=3,column=0)
+import_button.grid(row=4,column=0)
+clear_button.grid(row=5,column=0)
+#buttonframe.pack(side=TOP,pady=5)
 
-listbox.pack(side=LEFT)
-listbox2.pack(side=LEFT)
-import_button.pack(side=LEFT,fill='both',expand=True,padx=5)
-clear_button.pack(side=LEFT,fill='both',expand=True,padx=5)
-dropdown_stars.pack(side=LEFT, fill='x', padx=5)
-R1.pack(side=LEFT,pady=5)
-R2.pack(side=LEFT)
-R3.pack(side=LEFT)
-R4.pack(side=LEFT)
-R5.pack(side=LEFT)
-plot_button.pack(side=LEFT,padx=5)
-plotfit_button.pack(side=LEFT,padx=5)
-canvas.get_tk_widget().pack(side=BOTTOM,pady=15,fill='both')
+bottomframe.grid(row=0, rowspan=2, column=1)
+listbox.grid(row=0,column=0)
+listbox2.grid(row=1,column=0)
+
+star_offset_frame.grid(row=0, rowspan=2, column=2)
+dropdown_stars.grid(row=0,column=0)
+R1.grid(row=1,column=0)
+R2.grid(row=2,column=0)
+R3.grid(row=3,column=0)
+R4.grid(row=4,column=0)
+R5.grid(row=5,column=0)
+
+plot_frame.grid(row=3,column=0,columnspan=2)
+canvas.get_tk_widget().grid(row=0,column=0,columnspan=2)
+
+buttonframe2.grid(row=3,column=2)
+plot_button.grid(row=0,column=0)
+plotfit_button.grid(row=1,column=0)
+ha_entry_box.grid(row=2,column=0)
+b1_offset.grid(row=3,column=0)
+b2_offset.grid(row=4,column=0)
+b3_offset.grid(row=5,column=0)
+b4_offset.grid(row=6,column=0)
+b5_offset.grid(row=7,column=0)
+
+
+
+
+
+
+# 
 
 
 dropdown_year.config(width=12)
