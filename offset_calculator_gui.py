@@ -4,118 +4,52 @@ Created on Wed Jun 23 19:15:07 2021
 
 @author: erinr
 """
-
+##### LIBRARY IMPORTS #####
 
 import numpy as np
-import matplotlib.pyplot as plt
-import itertools
 import os
-import ipywidgets as widgets
 from tkinter import *
-import tkinter.messagebox as box
-from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg, NavigationToolbar2Tk)
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 
-months = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12']
-unique_stars = [None]
+##### FIND LOGS AND THEIR TIME RANGE #####
 
 stardir = r'C:\Users\erinr\Desktop\starlogs'
 os.chdir(stardir)
 
-window = Tk()
-window.title( 'Baseline Offset Calculator' )
-
-frame = Frame( window)
-bottomframe = Frame(window)
-buttonframe = Frame(window)
-star_offset_frame = Frame(window)
-calc_offset_frame = Frame(window)
-buttonframe2 = Frame(window)
-plot_frame = Frame(window)
-
 files = []
 for file in os.listdir(stardir):
-    if '.txt' in file:
+    if 'starLog' in file:
         files.append(file)
 years = list(set([files[i][0:4] for i in range(len(files))]))
 years.sort()
 years.reverse()
-print(years)
 
-yearvar = StringVar(frame)
-yearvar2 = StringVar(frame)
-monthvar = StringVar(frame)
-monthvar2 = StringVar(frame)
-yearvar.set('Year (Begin)')
-yearvar2.set('Year (End)')
-monthvar.set('Month (Begin)')
-monthvar2.set('Month (End)')
+months = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12']
+unique_stars = [None]
 
-def selected_baselines(*args):
-   selected = []
-   if bvar1.get() == 1:
-       selected.append(1)
-   if bvar2.get() == 2:
-       selected.append(2)
-   if bvar3.get() == 3:
-       selected.append(3)
-   if bvar4.get() == 4:
-       selected.append(4)
-   if bvar5.get() == 5:
-       selected.append(5)
+##### GUI WINDOW SETUP #####
+
+window = Tk()
+window.title('Baseline Offset Calculator')
     
-   return selected
+date_frame = Frame( window)
+selection_frame = Frame(window)
+sel_button_frame = Frame(window)
+star_ha_frame = Frame(window)
+offset_frame = Frame(window)
+plot_frame = Frame(window)
 
-
-bvar1 = IntVar(star_offset_frame)
-bvar2 = IntVar(star_offset_frame)
-bvar3 = IntVar(star_offset_frame)
-bvar4 = IntVar(star_offset_frame)
-bvar5 = IntVar(star_offset_frame)
-
-starvar = StringVar(star_offset_frame)
-starvar.set('Pick a Star')
-
-dropdown_stars = OptionMenu(star_offset_frame,starvar,*unique_stars)
-
-R1 = Checkbutton(star_offset_frame, text="Baseline 1", variable=bvar1, onvalue=1,
-                  command=selected_baselines)
-R2 = Checkbutton(star_offset_frame, text="Baseline 2", variable=bvar2, onvalue=2,
-                  command=selected_baselines)
-R3 = Checkbutton(star_offset_frame, text="Baseline 3", variable=bvar3, onvalue=3,
-                  command=selected_baselines)
-R4 = Checkbutton(star_offset_frame, text="Baseline 4", variable=bvar4, onvalue=4,
-                  command=selected_baselines)
-R5 = Checkbutton(star_offset_frame, text="Baseline 5", variable=bvar5, onvalue=5,
-                  command=selected_baselines)
-
-bvar1.trace('w', selected_baselines)
-bvar2.trace('w', selected_baselines)
-bvar3.trace('w', selected_baselines)
-bvar4.trace('w', selected_baselines)
-bvar5.trace('w', selected_baselines)
-
-
-dropdown_year = OptionMenu(frame, yearvar, *years)
-dropdown_months = OptionMenu(frame, monthvar, *months)
-dropdown_year2 = OptionMenu(frame, yearvar2, *years)
-dropdown_months2 = OptionMenu(frame, monthvar2, *months)
-
-listbox = Listbox(bottomframe, width=50, height=8, selectmode='extended')
-listbox2 = Listbox(bottomframe,width=50, height=8)
-
-
+##### FUNCTIONS #####
 
 def show_date(*args):
 
     if yearvar.get() != 'Year (Begin)' and monthvar.get() != 'Month (Begin)' and yearvar2.get() != 'Year (End)' and monthvar2.get() != 'Month (End)':
         year1 = yearvar.get()
         month1 = monthvar.get()
-        date_begin = year1 + '-' + month1
 
         year2 = yearvar2.get()
         month2 = monthvar2.get()
-        date_end = year2 + '-' + month2
         
         year_range = np.arange(int(year1), int(year2) + 1)
         month_range = np.arange(int(month1), int(month2) + 1)
@@ -147,12 +81,6 @@ def show_date(*args):
     else:
         pass
     
- 
-yearvar.trace('w', show_date)
-monthvar.trace('w', show_date)
-yearvar2.trace('w', show_date)
-monthvar2.trace('w', show_date)
-
 def onselect_logs(event):
     # Note here that Tkinter passes an event object to onselect()
     w = event.widget
@@ -166,21 +94,45 @@ def onselect_logs(event):
     for log in selected_logs:
         listbox2.insert('end', log)
 
-
-listbox.bind('<<ListboxSelect>>', onselect_logs)
-    
-
 def import_logs():
+    '''Import selected starlogs and sort data by star and offset,
+    and calculate the polynomial fits for each one'''
+    
+    # Reset baseline selections and text display
+    R1.deselect()
+    R2.deselect()
+    R3.deselect()
+    R4.deselect()
+    R5.deselect()
+    
     starvar.set('Pick a Star')
-    b1_offset.configure(text="b1: -1.000")
-    b2_offset.configure(text="b2: -1.000")
-    b3_offset.configure(text="b3: -1.000")
-    b4_offset.configure(text="b4: -1.000")
-    b5_offset.configure(text="b5: -1.000")
+    R1.configure(text="b1: -1.000")
+    R2.configure(text="b2: -1.000")
+    R3.configure(text="b3: -1.000")
+    R4.configure(text="b4: -1.000")
+    R5.configure(text="b5: -1.000")
     ha_var.set('Hour Angle')
     
+    # Activate function callbacks for the offset checkboxes and star dropdown
+    global trace1; global trace2; global trace3; global trace4; global trace5
+    trace1 = bvar1.trace('w', plot_offsets)
+    trace2 = bvar2.trace('w', plot_offsets)
+    trace3 = bvar3.trace('w', plot_offsets)
+    trace4 = bvar4.trace('w', plot_offsets)
+    trace5 = bvar5.trace('w', plot_offsets)
     
+    global startrace;global startrace_offset
+    startrace = starvar.trace('w',plot_offsets)
+    startrace_offset = starvar.trace('w',calculate_offsets)
+    
+    # clear and redraw the plotting canvas
+    fig.clear()
+    canvas.draw()
+
+    # Get list of selected starlogs from box
     starlogs = list(listbox2.get(0,'end'))
+    
+    # Begin data import
     data = []
 
     # Pull in starlog data, skipping the header and also skipping the fsnr lines. Does not
@@ -191,8 +143,7 @@ def import_logs():
             content = f.read().split('\nUT_date: ')[1:]
             for c in content:
                 data.append(c.split('\n')[17::2])
-    
-    #print(data)
+
     #Combine all the starlogs into one list of entries, then split each entry
     #which is a single string containing the entire entry into a list of the individual column entries
     for i in range(len(data)):
@@ -227,7 +178,6 @@ def import_logs():
     b5_dict = {star: [] for star in unique_stars}
     angles_dict = {star: [] for star in unique_stars}
     
-    
     # Sort the starlog entries into the dictionaries
     for star in unique_stars:
         for i in range(len(stars)):
@@ -239,7 +189,7 @@ def import_logs():
                 b5_dict[star].append(b5[i])
                 angles_dict[star].append(angles[i])
                 
-    # calculate polynomial fits
+    # Calculate polynomial fits
     global polydict
     polydict = {star: [] for star in unique_stars}
     for star in unique_stars:
@@ -249,16 +199,247 @@ def import_logs():
         polydict[star].append(np.polyfit(angles_dict[star], b4_dict[star],2))
         polydict[star].append(np.polyfit(angles_dict[star], b5_dict[star],2))
      
+    # Populate star dropdown    
     dropdown_stars['menu'].delete(0,'end')
     for star in unique_stars:
         dropdown_stars['menu'].add_command(label=star,command=lambda value=star: starvar.set(value))       
-        
+    
+def poly_calc(a, b, c, x):
+    '''Quadratic function for calculating offsets based on coefficients'''
+    return (a * x**2) + (b*x) + c
+
 def clear_selection():
+    
+    '''Clear all selections except date range.'''
+    
+    # Remove the value tracers for the offset displays and star dropdown
+    # so they don't call any functions when their text is reset to default
+    bvar1.trace_remove('write',trace1)
+    bvar2.trace_remove('write',trace2)
+    bvar3.trace_remove('write',trace3)
+    bvar4.trace_remove('write',trace4)
+    bvar5.trace_remove('write',trace5)
+    starvar.trace_remove('write',startrace)
+    starvar.trace_remove('write',startrace_offset)
+    
+    # Deselect all offset checkboxes and reset text to default
+    R1.deselect()
+    R2.deselect()
+    R3.deselect()
+    R4.deselect()
+    R5.deselect()
+    R1.configure(text='b1: -1.000')
+    R2.configure(text='b2: -1.000')
+    R3.configure(text='b3: -1.000')
+    R4.configure(text='b4: -1.000')
+    R5.configure(text='b5: -1.000')
+    
+    # Clear dropdown and HA entry box
     dropdown_stars['menu'].delete(0,'end')
+    starvar.set('Pick a Star')
+    ha_var.set('Hour Angle')
+    
+    # Clear the selected logs box
     listbox2.delete(0, 'end')
+    
+    # Clear the plotting frame and redraw it
+    fig.clear()
+    canvas.draw()
+    window.focus()
+    
+def selected_baselines(*args):
+
+   '''Keep track of which offsets are selected. If one is,
+   give a raised relief to the checkbox. If one isn't, flatten
+   it and reset text to default'''
+
+   selected = []
+   if bvar1.get() == 1:
+       selected.append(1)
+       R1.configure(relief='raised')
+   else:
+       R1.configure(text='b1: -1.000', relief='flat')
+   if bvar2.get() == 2:
+       selected.append(2)
+       R2.configure(relief='raised')
+   else:
+       R2.configure(text='b2: -1.000', relief='flat')
+   if bvar3.get() == 3:
+       selected.append(3)
+       R3.configure(relief='raised')
+   else:
+       R3.configure(text='b3: -1.000',relief='flat')
+   if bvar4.get() == 4:
+       selected.append(4)
+       R4.configure(relief='raised')
+   else:
+       R4.configure(text='b4: -1.000', relief='flat')
+   if bvar5.get() == 5:
+       selected.append(5)
+       R5.configure(relief='raised')
+   else:
+       R5.configure(text='b5: -1.000', relief='flat')
+    
+   return selected
+
+def plot_offsets(*args):
+    
+    '''Plot the offset data and quadratic fits for each
+    selected baseline'''
+
+    # Clear the figure
+    fig.clear()
+    
+    # Get selected baselines and star
+    baselines = selected_baselines()
+    star = starvar.get()
+
+
+    if len(baselines) == 0: # clear figure if no baselines selected
+        fig.clear()
+    else: 
+        # create plot
+        global plot1
+        plot1 = fig.add_subplot(111)
+        
+        # hour angles for plotting fit: from minimum angle in data - 0.5 to max angle in data + 0.5
+        xs=np.linspace(np.amin(angles_dict[star]) - 0.5, np.amax(angles_dict[star]) + 0.5, 1000)
+
+        # Scatter plot the hour angles and offsets for the star, also plot quadratic fit
+        if 1 in baselines:
+            plot1.scatter(angles_dict[star], b1_dict[star], label='b1, y=%.4fx^2 + %.4fx + %.4f' % (polydict[star][0][0], polydict[star][0][1], polydict[star][0][2]),c='lime')
+            plot1.plot(xs, poly_calc(polydict[star][0][0], polydict[star][0][1], polydict[star][0][2], xs),c='lime')
+            R1.configure()
+        if 2 in baselines:
+            plot1.scatter(angles_dict[star], b2_dict[star], label='b2, y=%.4fx^2 + %.4fx + %.4f' % (polydict[star][1][0], polydict[star][1][1], polydict[star][1][2]),c='red')
+            plot1.plot(xs, poly_calc(polydict[star][1][0], polydict[star][1][1], polydict[star][1][2], xs),c='red')
+        if 3 in baselines:
+            plot1.scatter(angles_dict[star], b3_dict[star], label='b3, y=%.4fx^2 + %.4fx + %.4f' % (polydict[star][2][0], polydict[star][2][1], polydict[star][2][2]),c='orange')
+            plot1.plot(xs, poly_calc(polydict[star][2][0], polydict[star][2][1], polydict[star][2][2], xs),c='orange')
+        if 4 in baselines:
+            plot1.scatter(angles_dict[star], b4_dict[star], label='b4, y=%.4fx^2 + %.4fx + %.4f' % (polydict[star][3][0], polydict[star][3][1], polydict[star][3][2]),c='blue')
+            plot1.plot(xs, poly_calc(polydict[star][3][0], polydict[star][3][1], polydict[star][3][2], xs),c='blue')
+        if 5 in baselines:
+            plot1.scatter(angles_dict[star], b5_dict[star], label='b5, y=%.4fx^2 + %.4fx + %.4f' % (polydict[star][4][0], polydict[star][4][1], polydict[star][4][2]),c='magenta')    
+            plot1.plot(xs, poly_calc(polydict[star][4][0], polydict[star][4][1], polydict[star][4][2], xs),c='magenta') 
+        
+        # Other plot setup
+        ylims = plot1.axes.get_ylim()
+        plot1.set_ylim([ylims[0]-0.5, ylims[1]+0.5])
+        plot1.set_xlim([np.amin(angles_dict[star]) - 0.75,np.amax(angles_dict[star]) + 0.75])
+        plot1.set_title(star,fontsize=12)
+        plot1.set_ylabel('Baseline Offset (mm)',fontsize=12)
+        plot1.set_xlabel('Hour Angle', fontsize=12)
+        plot1.axes.tick_params(labelsize=10)
+        plot1.axes.legend(fontsize=10,loc='upper left')
+        
+    # redraw the canvas with plots on it
+    canvas.draw()
+        
+def calculate_offsets(*args):
+    '''Calculate and display the offset for a given star,
+    hour angle, and selected baseline'''
+    
+    # Get current star and baselines
+    baselines = selected_baselines()
+    star = starvar.get()
+    
+    if ha_var.get() == 'Hour Angle': # do nothing if no hour angle supplied yet
+        pass
+    else:
+        hour_angle = float(ha_var.get())
+        if 1 in baselines:
+            R1.configure(text='b1: %.3f' % poly_calc(polydict[star][0][0],polydict[star][0][1],polydict[star][0][2],hour_angle))
+        if 2 in baselines:
+            R2.configure(text='b2: %.3f' % poly_calc(polydict[star][1][0],polydict[star][1][1],polydict[star][1][2],hour_angle))
+        if 3 in baselines:
+            R3.configure(text='b3: %.3f' % poly_calc(polydict[star][2][0],polydict[star][2][1],polydict[star][2][2],hour_angle))
+        if 4 in baselines:
+            R4.configure(text='b4: %.3f' % poly_calc(polydict[star][3][0],polydict[star][3][1],polydict[star][3][2],hour_angle))
+        if 5 in baselines:
+            R5.configure(text='b5: %.3f' % poly_calc(polydict[star][4][0],polydict[star][4][1],polydict[star][4][2],hour_angle))
+
+def ha_focus(event):
+    '''Remove text from HA entry box when it is clicked into'''
+    ha_var.set('')
+    ha_entry_box.focus_set()
+
+def ha_outfocus(event):
+    '''Reset HA entry box text'''
+    ha_var.set('Hour Angle')
+
+##### CREATE GUI WIDGETS AND THEIR FUNCTION CALLBACKS #####
+
+# Date range dropdowns    
+yearvar = StringVar(date_frame)
+yearvar2 = StringVar(date_frame)
+monthvar = StringVar(date_frame)
+monthvar2 = StringVar(date_frame)
+
+yearvar.set('Year (Begin)')
+yearvar2.set('Year (End)')
+monthvar.set('Month (Begin)')
+monthvar2.set('Month (End)')
+
+yearvar.trace('w', show_date)
+monthvar.trace('w', show_date)
+yearvar2.trace('w', show_date)
+monthvar2.trace('w', show_date)
+
+dropdown_year = OptionMenu(date_frame, yearvar, *years)
+dropdown_months = OptionMenu(date_frame, monthvar, *months)
+dropdown_year2 = OptionMenu(date_frame, yearvar2, *years)
+dropdown_months2 = OptionMenu(date_frame, monthvar2, *months)
+dropdown_year.config(width=12)
+dropdown_year2.config(width=12)
+dropdown_months.config(width=12)
+dropdown_months2.config(width=12)
+
+# Boxes for all logs in date range and then selected logs in range
+listbox = Listbox(selection_frame, width=35, height=8, selectmode='extended')
+listbox.bind('<<ListboxSelect>>', onselect_logs)
+listbox2 = Listbox(selection_frame,width=35, height=8)
+
+# Import logs and clear selection buttons
+import_button = Button(sel_button_frame, text = 'Import Logs', command=import_logs, width=15)
+clear_button = Button(sel_button_frame, text = 'Clear Selection', command=clear_selection,width=15)
   
+# Star selection dropdown and hour angle entry box  
+starvar = StringVar(star_ha_frame)
+starvar.set('Pick a Star')
+
+dropdown_stars = OptionMenu(star_ha_frame,starvar,*unique_stars)
+dropdown_stars.config(width=10)
+
+ha_var = StringVar(star_ha_frame)
+ha_var.set('Hour Angle')
+
+ha_entry_box = Entry(star_ha_frame,textvariable=ha_var,width=15)
+ha_entry_box.bind("<Return>", calculate_offsets)
+ha_entry_box.bind("<FocusIn>", ha_focus)
+ha_entry_box.bind("<FocusOut>", ha_outfocus)
+
+# Baseline offset checkboxes/value display
+bvar1 = IntVar(offset_frame)
+bvar2 = IntVar(offset_frame)
+bvar3 = IntVar(offset_frame)
+bvar4 = IntVar(offset_frame)
+bvar5 = IntVar(offset_frame)
+
+R1 = Checkbutton(offset_frame, text="b1: -1.000", variable=bvar1, onvalue=1, offvalue=0,
+                  command=calculate_offsets,activebackground='lime',bg='lime',fg='black',bd=5,width=10)
+R2 = Checkbutton(offset_frame, text="b2: -1.000", variable=bvar2, onvalue=2, offvalue=0,
+                  command=calculate_offsets,activebackground='red',bg='red', fg='black',bd=5,width=10)
+R3 = Checkbutton(offset_frame, text="b3: -1.000", variable=bvar3, onvalue=3, offvalue=0,
+                  command=calculate_offsets,activebackground='orange',bg='orange',fg='black',bd=5,width=10)
+R4 = Checkbutton(offset_frame, text="b4: -1.000", variable=bvar4, onvalue=4, offvalue=0,
+                  command=calculate_offsets,bg='blue',fg='white',activeforeground='white',activebackground='blue',selectcolor='gray',bd=5,width=10)
+R5 = Checkbutton(offset_frame, text="b5: -1.000", variable=bvar5, onvalue=5, offvalue=0,
+                  command=calculate_offsets,activebackground='magenta',bg='magenta', fg='black',bd=5,width=10)
+
+# Plotting area
 # the figure that will contain the plot
-fig = Figure(figsize=(6,4.5), dpi=100)
+fig = Figure(figsize=(7,5), dpi=100)
 
 # creating the Tkinter canvas
 # containing the Matplotlib figure
@@ -266,160 +447,37 @@ canvas = FigureCanvasTkAgg(fig, master = plot_frame)
 
 # placing the canvas on the Tkinter window
 canvas.get_tk_widget().configure(highlightbackground='black',highlightthickness=2)
-  
-def plot_offsets():
 
-    fig.clear()
-    global plot1
-    plot1 = fig.add_subplot(111)
+##### ARRANGE WIDGETS IN WINDOW #####
 
-    baselines = selected_baselines()
-    star = starvar.get()
-    print(baselines)
-    print(star)
-    
-    # Scatter plot the hour angles and offsets for the star
-    if 1 in baselines:
-        plot1.scatter(angles_dict[star], b1_dict[star], label='b1',c='lime')
-    if 2 in baselines:
-        plot1.scatter(angles_dict[star], b2_dict[star], label='b2',c='red')
-    if 3 in baselines:
-        plot1.scatter(angles_dict[star], b3_dict[star], label='b3',c='orange')
-    if 4 in baselines:
-        plot1.scatter(angles_dict[star], b4_dict[star], label='b4',c='blue')
-    if 5 in baselines:
-        plot1.scatter(angles_dict[star], b5_dict[star], label='b5',c='magenta')    
-    
-    
-    ylims = plot1.axes.get_ylim()
-    # Other plot setup
-    plot1.set_ylim([ylims[0]-0.5, ylims[1]+0.5])
-    plot1.set_xlim([np.amin(angles_dict[star]) - 0.75,np.amax(angles_dict[star]) + 0.75])
-    plot1.set_title(star,fontsize=12)
-    plot1.set_ylabel('Baseline Offset (mm)',fontsize=12)
-    plot1.set_xlabel('Hour Angle', fontsize=12)
-    plot1.axes.tick_params(labelsize=10)
-    global leg
-    leg = plot1.axes.legend(fontsize=10,loc='upper left')
-    
-    canvas.draw()
-    
-def plot_fits():
-    baselines = selected_baselines()
-    star = starvar.get()
-    xs=np.linspace(np.amin(angles_dict[star]) - 0.5, np.amax(angles_dict[star]) + 0.5, 1000)
-    
-    # Scatter plot the hour angles and offsets for the star
-    leg_text = leg.get_texts()
-    leg_text_strings = [leg.get_texts()[i].get_text() for i in range(len(leg.get_texts()))]
-    print(leg_text)
-    if 1 in baselines:
-        leg_text[leg_text_strings.index('b1')].set_text('b1, y=%.4fx^2 + %.4fx + %.4f' % (polydict[star][0][0], polydict[star][0][1], polydict[star][0][2]))
-        plot1.plot(xs, poly_calc(polydict[star][0][0], polydict[star][0][1], polydict[star][0][2], xs),c='lime')
-    if 2 in baselines:
-        leg_text[leg_text_strings.index('b2')].set_text('b2, y=%.4fx^2 + %.4fx + %.4f' % (polydict[star][1][0], polydict[star][1][1], polydict[star][1][2]))
-        plot1.plot(xs, poly_calc(polydict[star][1][0], polydict[star][1][1], polydict[star][1][2], xs),c='red')
-    if 3 in baselines:
-        leg_text[leg_text_strings.index('b3')].set_text('b3, y=%.4fx^2 + %.4fx + %.4f' % (polydict[star][2][0], polydict[star][2][1], polydict[star][2][2]))
-        plot1.plot(xs, poly_calc(polydict[star][2][0], polydict[star][2][1], polydict[star][2][2], xs),c='orange')
-    if 4 in baselines:
-        leg_text[leg_text_strings.index('b4')].set_text('b4, y=%.4fx^2 + %.4fx + %.4f' % (polydict[star][3][0], polydict[star][3][1], polydict[star][3][2]))
-        plot1.plot(xs, poly_calc(polydict[star][3][0], polydict[star][3][1], polydict[star][3][2], xs),c='blue')
-    if 5 in baselines:
-        leg_text[leg_text_strings.index('b5')].set_text('b5, y=%.4fx^2 + %.4fx + %.4f' % (polydict[star][4][0], polydict[star][4][1], polydict[star][4][2]))
-        plot1.plot(xs, poly_calc(polydict[star][4][0], polydict[star][4][1], polydict[star][4][2], xs),c='magenta') 
-
-    canvas.draw()
-    
-def poly_calc(a, b, c, x):
-    return (a * x**2) + (b*x) + c
-
-ha_var = StringVar(buttonframe2)
-ha_var.set('Hour Angle')
-b1_offset = Label(buttonframe2,text="b1: -1.000",width=10,bg='lime',fg='black',bd=3,relief='raised')
-b2_offset = Label(buttonframe2,text="b2: -1.000",width=10,bg='red',fg='black',bd=3,relief='raised')
-b3_offset = Label(buttonframe2,text="b3: -1.000",width=10,bg='orange',fg='black',bd=3,relief='raised')
-b4_offset = Label(buttonframe2,text="b4: -1.000",width=10,bg='blue',fg='white',bd=3,relief='raised')
-b5_offset = Label(buttonframe2,text="b5: -1.000",width=10,bg='magenta',fg='black',bd=3,relief='raised')
-
-def calculate_offsets(*args):
-    hour_angle = float(ha_var.get())
-    print(hour_angle)
-    star = starvar.get()
-    
-    b1_offset.configure(text='b1: %.3f' % poly_calc(polydict[star][0][0],polydict[star][0][1],polydict[star][0][2],hour_angle))
-    b2_offset.configure(text='b2: %.3f' % poly_calc(polydict[star][1][0],polydict[star][1][1],polydict[star][1][2],hour_angle))
-    b3_offset.configure(text='b3: %.3f' % poly_calc(polydict[star][2][0],polydict[star][2][1],polydict[star][2][2],hour_angle))
-    b4_offset.configure(text='b4: %.3f' % poly_calc(polydict[star][3][0],polydict[star][3][1],polydict[star][3][2],hour_angle))
-    b5_offset.configure(text='b5: %.3f' % poly_calc(polydict[star][4][0],polydict[star][4][1],polydict[star][4][2],hour_angle))
-
-def ha_focus(event):
-    ha_var.set('')
-    ha_entry_box.focus_set()
-
-def ha_outfocus(event):
-    ha_var.set('Hour Angle')
-
-    
-ha_entry_box = Entry(buttonframe2,textvariable=ha_var,width=15)
-
-ha_entry_box.bind("<Return>", calculate_offsets)
-ha_entry_box.bind("<FocusIn>", ha_focus)
-ha_entry_box.bind("<FocusOut>", ha_outfocus)
-    
-import_button = Button(frame, text = 'Import Logs', command=import_logs, width=15)
-clear_button = Button(frame, text = 'Clear Selection', command=clear_selection,width=15)
-plot_button = Button(buttonframe2, text = 'Plot Offsets', command=plot_offsets,width=15)
-plotfit_button = Button(buttonframe2, text = 'Plot Fits',command=plot_fits,width=15)
-#btn.pack( side = RIGHT , padx = 5 )
-#listbox_year.pack( side = LEFT )
-#listbox2.pack(side= LEFT,padx=20)
-frame.configure(highlightbackground='black',highlightthickness='2',padx=20,pady=40)
-frame.grid(row=0, rowspan=2, column=0)
+date_frame.grid(row=0,column=0,columnspan=2,pady=10,padx=10)
 dropdown_year.grid(row=0,column=0,pady=5)
-dropdown_months.grid(row=1,column=0)
-dropdown_year2.grid(row=2,column=0)
-dropdown_months2.grid(row=3,column=0)
-import_button.grid(row=4,column=0)
-clear_button.grid(row=5,column=0)
-#buttonframe.pack(side=TOP,pady=5)
+dropdown_months.grid(row=0,column=1)
+dropdown_year2.grid(row=0,column=2)
+dropdown_months2.grid(row=0,column=3)
 
-bottomframe.grid(row=0, rowspan=2, column=1)
-listbox.grid(row=0,column=0)
-listbox2.grid(row=1,column=0)
+selection_frame.grid(row=1, column=0,columnspan=2,pady=10,padx=10)
+listbox.grid(row=0,rowspan=2,column=0,columnspan=2,padx=10)
+listbox2.grid(row=0,rowspan=2,column=2,columnspan=2,padx=10)
 
-star_offset_frame.grid(row=0, rowspan=2, column=2)
+sel_button_frame.grid(row=2,column=0,columnspan=2,pady=10,padx=10)
+import_button.grid(row=0,column=0,padx=5)
+clear_button.grid(row=0,column=1,padx=5)
+
+star_ha_frame.grid(row=3,column=0,padx=10,pady=10)
 dropdown_stars.grid(row=0,column=0)
-R1.grid(row=1,column=0)
-R2.grid(row=2,column=0)
-R3.grid(row=3,column=0)
-R4.grid(row=4,column=0)
-R5.grid(row=5,column=0)
+ha_entry_box.grid(row=1,column=0,padx=10,pady=10)
 
-plot_frame.grid(row=3,column=0,columnspan=2)
-canvas.get_tk_widget().grid(row=0,column=0,columnspan=2)
+offset_frame.grid(row=3, column=1,padx=10,pady=10)
+R1.grid(row=0,column=1,padx=5)
+R2.grid(row=0,column=2,padx=5)
+R3.grid(row=0,column=3,padx=5)
+R4.grid(row=0,column=4,padx=5)
+R5.grid(row=0,column=5,padx=5)
 
-buttonframe2.grid(row=3,column=2)
-plot_button.grid(row=0,column=0)
-plotfit_button.grid(row=1,column=0)
-ha_entry_box.grid(row=2,column=0)
-b1_offset.grid(row=3,column=0)
-b2_offset.grid(row=4,column=0)
-b3_offset.grid(row=5,column=0)
-b4_offset.grid(row=6,column=0)
-b5_offset.grid(row=7,column=0)
+plot_frame.grid(row=4,column=0,columnspan=2,padx=10,pady=10)
+Frame(window).grid(row=5,column=0,columnspan=2,padx=10,pady=10)
+canvas.get_tk_widget().grid(row=0,column=0)
 
-
-
-
-
-
-# 
-
-
-dropdown_year.config(width=12)
-dropdown_year2.config(width=12)
-dropdown_months.config(width=12)
-dropdown_months2.config(width=12)
-dropdown_stars.config(width=10)
+##### RUN #####
 window.mainloop()
