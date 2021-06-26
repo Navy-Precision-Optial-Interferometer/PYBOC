@@ -15,3 +15,5 @@
       
       d. Clear selection now properly de-selects baselines, clears the plot, and resets the star dropdown/hour angle entry/offset displays to default values.
 3. Updated layout to a vertical mostly one-column design.
+
+4. Code has been organized/cleaned up and at least broad comments added to everything
