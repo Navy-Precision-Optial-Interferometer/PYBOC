@@ -2,6 +2,12 @@
 
 # Changelog for baseline_offset_gui.py
 
+08/11/2021
+
+1. Changed flow of layout from vertical to horizontal to address clipping issues.
+3. Added ability to plot a histogram of the offsets for a given baseline for all targets in the selected logs.
+4. Added some logic to capture/prevent errors caused by reasonable use cases (i.e., selecting baselines before a star is selected) 
+
 06/25/2021
 
 1. Fixed issue where starlogs failed to import due to wrong file extension; code now looks for "starLog" in filename regardless of file extension since they are raw text files.
