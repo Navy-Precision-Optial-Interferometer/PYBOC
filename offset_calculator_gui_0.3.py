@@ -15,7 +15,8 @@ from matplotlib.figure import Figure
 
 ##### FIND LOGS AND THEIR TIME RANGE #####
 
-stardir = r'C:\Users\erinr\Desktop\starlogs'
+app_path = os.getcwd()
+stardir = app_path + r'\starlogs'
 os.chdir(stardir)
 
 files = []
@@ -179,6 +180,7 @@ def import_logs():
                     data_clean.append(data[i][j])
         
         # Make arrays of the star names, hour angles, and offsets for each individual entry
+        global angles; global b1; global b2; global b3; global b4; global b5
         stars = np.array([data_clean[i][2] for i in range(len(data_clean))])
         angles = np.array([data_clean[i][4] for i in range(len(data_clean))]).astype(np.float)
         b1 = np.array([data_clean[i][9] for i in range(len(data_clean))]).astype(np.float)
@@ -254,6 +256,7 @@ def clear_selection():
     R3.configure(text='b3: -1.000')
     R4.configure(text='b4: -1.000')
     R5.configure(text='b5: -1.000')
+    histo_button.deselect()
     
     # Reset import button
     import_button.configure(text='Import Logs', bg='black')
@@ -323,40 +326,61 @@ def plot_offsets(*args):
             fig.clear()
         else: 
             # create plot
-            global plot1
-            plot1 = fig.add_subplot(111)
-            
-            # hour angles for plotting fit: from minimum angle in data - 0.5 to max angle in data + 0.5
-            xs=np.linspace(np.amin(angles_dict[star]) - 0.5, np.amax(angles_dict[star]) + 0.5, 1000)
+            if histvar.get() == 0 and starvar.get() != 'Pick a Star':
+                global plot1
+                plot1 = fig.add_subplot(111)
+                
+                # hour angles for plotting fit: from minimum angle in data - 0.5 to max angle in data + 0.5
+                xs=np.linspace(np.amin(angles_dict[star]) - 0.5, np.amax(angles_dict[star]) + 0.5, 1000)
+        
+                # Scatter plot the hour angles and offsets for the star, also plot quadratic fit
+                if 1 in baselines:
+                    plot1.scatter(angles_dict[star], b1_dict[star], label='b1, y=%.3fx^2 + %.3fx + %.3f' % (polydict[star][0][0], polydict[star][0][1], polydict[star][0][2]),c='lime')
+                    plot1.plot(xs, poly_calc(polydict[star][0][0], polydict[star][0][1], polydict[star][0][2], xs),c='lime')
+                    R1.configure()
+                if 2 in baselines:
+                    plot1.scatter(angles_dict[star], b2_dict[star], label='b2, y=%.3fx^2 + %.3fx + %.3f' % (polydict[star][1][0], polydict[star][1][1], polydict[star][1][2]),c='red')
+                    plot1.plot(xs, poly_calc(polydict[star][1][0], polydict[star][1][1], polydict[star][1][2], xs),c='red')
+                if 3 in baselines:
+                    plot1.scatter(angles_dict[star], b3_dict[star], label='b3, y=%.3fx^2 + %.3fx + %.3f' % (polydict[star][2][0], polydict[star][2][1], polydict[star][2][2]),c='orange')
+                    plot1.plot(xs, poly_calc(polydict[star][2][0], polydict[star][2][1], polydict[star][2][2], xs),c='orange')
+                if 4 in baselines:
+                    plot1.scatter(angles_dict[star], b4_dict[star], label='b4, y=%.3fx^2 + %.3fx + %.3f' % (polydict[star][3][0], polydict[star][3][1], polydict[star][3][2]),c='blue')
+                    plot1.plot(xs, poly_calc(polydict[star][3][0], polydict[star][3][1], polydict[star][3][2], xs),c='blue')
+                if 5 in baselines:
+                    plot1.scatter(angles_dict[star], b5_dict[star], label='b5, y=%.3fx^2 + %.3fx + %.3f' % (polydict[star][4][0], polydict[star][4][1], polydict[star][4][2]),c='magenta')    
+                    plot1.plot(xs, poly_calc(polydict[star][4][0], polydict[star][4][1], polydict[star][4][2], xs),c='magenta') 
+                
+                # Other plot setup
+                ylims = plot1.axes.get_ylim()
+                plot1.set_ylim([ylims[0]-0.5, ylims[1]+0.5])
+                plot1.set_xlim([np.amin(angles_dict[star]) - 1.0, np.amax(angles_dict[star]) + 1.0])
+                plot1.set_title(star,fontsize=12)
+                plot1.set_ylabel('Baseline Offset (mm)',fontsize=12)
+                plot1.set_xlabel('Hour Angle', fontsize=12)
+                plot1.axes.tick_params(labelsize=10)
+                plot1.axes.legend(fontsize=8,frameon=False)
+            elif histvar.get() == 1:
+                global plot2
+                plot2 = fig.add_subplot(111)
     
-            # Scatter plot the hour angles and offsets for the star, also plot quadratic fit
-            if 1 in baselines:
-                plot1.scatter(angles_dict[star], b1_dict[star], label='b1, y=%.3fx^2 + %.3fx + %.3f' % (polydict[star][0][0], polydict[star][0][1], polydict[star][0][2]),c='lime')
-                plot1.plot(xs, poly_calc(polydict[star][0][0], polydict[star][0][1], polydict[star][0][2], xs),c='lime')
-                R1.configure()
-            if 2 in baselines:
-                plot1.scatter(angles_dict[star], b2_dict[star], label='b2, y=%.3fx^2 + %.3fx + %.3f' % (polydict[star][1][0], polydict[star][1][1], polydict[star][1][2]),c='red')
-                plot1.plot(xs, poly_calc(polydict[star][1][0], polydict[star][1][1], polydict[star][1][2], xs),c='red')
-            if 3 in baselines:
-                plot1.scatter(angles_dict[star], b3_dict[star], label='b3, y=%.3fx^2 + %.3fx + %.3f' % (polydict[star][2][0], polydict[star][2][1], polydict[star][2][2]),c='orange')
-                plot1.plot(xs, poly_calc(polydict[star][2][0], polydict[star][2][1], polydict[star][2][2], xs),c='orange')
-            if 4 in baselines:
-                plot1.scatter(angles_dict[star], b4_dict[star], label='b4, y=%.3fx^2 + %.3fx + %.3f' % (polydict[star][3][0], polydict[star][3][1], polydict[star][3][2]),c='blue')
-                plot1.plot(xs, poly_calc(polydict[star][3][0], polydict[star][3][1], polydict[star][3][2], xs),c='blue')
-            if 5 in baselines:
-                plot1.scatter(angles_dict[star], b5_dict[star], label='b5, y=%.3fx^2 + %.3fx + %.3f' % (polydict[star][4][0], polydict[star][4][1], polydict[star][4][2]),c='magenta')    
-                plot1.plot(xs, poly_calc(polydict[star][4][0], polydict[star][4][1], polydict[star][4][2], xs),c='magenta') 
-            
-            # Other plot setup
-            ylims = plot1.axes.get_ylim()
-            plot1.set_ylim([ylims[0]-0.5, ylims[1]+0.5])
-            plot1.set_xlim([np.amin(angles_dict[star]) - 1.0, np.amax(angles_dict[star]) + 1.0])
-            plot1.set_title(star,fontsize=12)
-            plot1.set_ylabel('Baseline Offset (mm)',fontsize=12)
-            plot1.set_xlabel('Hour Angle', fontsize=12)
-            plot1.axes.tick_params(labelsize=10)
-            plot1.axes.legend(fontsize=8,frameon=False)
-    except NameError:
+                # Scatter plot the hour angles and offsets for the star, also plot quadratic fit
+                if 1 in baselines:
+                    plot2.hist(b1, label='b1, mean = %.3f' % np.mean(b1), color='lime')
+                if 2 in baselines:
+                    plot2.hist(b2, label='b2, mean = %.3f' % np.mean(b2), color='red')
+                if 3 in baselines:
+                    plot2.hist(b3, label='b3, mean = %.3f' % np.mean(b3), color='orange')
+                if 4 in baselines:
+                    plot2.hist(b4, label='b4, mean = %.3f' % np.mean(b4), color='blue')
+                if 5 in baselines:
+                    plot2.hist(b5, label='b5, mean = %.3f' % np.mean(b5), color='magenta')
+                    
+                plot2.set_title('Baseline Offsets for Targets in Selected Logs')
+                plot2.set_xlabel('Baseline Offset (mm)', fontsize=12)
+                plot2.axes.tick_params(labelsize=10)
+                plot2.axes.legend(fontsize=8,frameon=False)
+    except NameError or KeyError:
         fig.clear()
         pass
     # redraw the canvas with plots on it
@@ -375,13 +399,6 @@ def calculate_offsets(*args):
     if ha_var.get() == 'Hour Angle' or ha_var.get() == '' or star=='Pick a Star': # do nothing if no hour angle supplied yet
         pass
     else:
-        # try:
-        #     line = line1.pop(0)
-        #     line.remove()
-        #     del line
-        #     canvas.draw()
-        # except UnboundLocalError:
-        #     pass
         hour_angle = float(ha_var.get())
         line1 = plot1.axvline(x=hour_angle,c='black')
         if 1 in baselines:
@@ -396,6 +413,7 @@ def calculate_offsets(*args):
             R5.configure(text='b5: %.3f' % poly_calc(polydict[star][4][0],polydict[star][4][1],polydict[star][4][2],hour_angle))
      
     canvas.draw()
+    
 def ha_focus(event):
     '''Remove text from HA entry box when it is clicked into'''
     ha_var.set('')
@@ -416,9 +434,13 @@ instructions = """Welcome to PyBOC, the Python Baseline Offset Calculator Tool f
 1. Select the date range containing the starLogs you wish to use.
 2. Add or remove starLogs from your selection using the buttons, then click 'Import Logs.'
 3. Select the star and baselines to calculate offsets for.
-5. Input the hour angle and hit 'Enter.' The calculated offsets will be displayed in the colored boxes."""
+5. Input the hour angle and hit 'Enter.' The calculated offsets will be displayed in the colored boxes.
+6. Select 'Display Offset Histograms' to show histograms of the offsets on a baseline for all targets
+   in the selected logs.
+7. Use 'Save Figure' to save the currently displayed figure."""
+
     
-T1 = Label(date_frame,height=7,width=95,text=instructions,borderwidth=2,relief='solid')
+T1 = Label(date_frame,height=10,width=95,text=instructions,borderwidth=2,relief='solid')
 
 # logo= PhotoImage('banner_logos.png')
 # T2 = Label(image=logo)
@@ -497,6 +519,9 @@ trace3 = bvar3.trace('w', plot_offsets)
 trace4 = bvar4.trace('w', plot_offsets)
 trace5 = bvar5.trace('w', plot_offsets)
 
+histvar=IntVar(offset_frame)
+hist_trace = histvar.trace('w',plot_offsets)
+
 R1 = Checkbutton(offset_frame, text="b1: -1.000", variable=bvar1, onvalue=1, offvalue=0,
                   command=calculate_offsets,activebackground='lime',bg='lime',fg='black',bd=5,width=10)
 R2 = Checkbutton(offset_frame, text="b2: -1.000", variable=bvar2, onvalue=2, offvalue=0,
@@ -508,13 +533,14 @@ R4 = Checkbutton(offset_frame, text="b4: -1.000", variable=bvar4, onvalue=4, off
 R5 = Checkbutton(offset_frame, text="b5: -1.000", variable=bvar5, onvalue=5, offvalue=0,
                   command=calculate_offsets,activebackground='magenta',bg='magenta', fg='black',bd=5,width=10)
 
+histo_button = Checkbutton(offset_frame, text='Display Offset\nHistograms', variable=histvar, command=plot_offsets,width=15,onvalue=1,offvalue=0)
 # Plotting area
 # the figure that will contain the plot
-fig = Figure(figsize=(6,4.5), dpi=100)
+fig = Figure(figsize=(6,5),dpi=100)
 
 # creating the Tkinter canvas
 # containing the Matplotlib figure
-canvas = FigureCanvasTkAgg(fig, master = plot_frame)
+canvas = FigureCanvasTkAgg(fig, master = plot_frame )
 
 # placing the canvas on the Tkinter window
 canvas.get_tk_widget().configure(highlightbackground='black',highlightthickness=2)
@@ -529,7 +555,7 @@ dropdown_months.grid(row=1,column=1)
 dropdown_year2.grid(row=1,column=2)
 dropdown_months2.grid(row=1,column=3)
 
-selection_frame.grid(row=1, column=0,columnspan=3,pady=5,padx=5)
+selection_frame.grid(row=1, column=0,columnspan=4,pady=5,padx=5)
 label_avail.grid(row=0,column=0,padx=5,pady=5)
 label_select.grid(row=0,column=2,padx=5,pady=5)
 listbox.grid(row=1,rowspan=5,column=0,padx=5)
@@ -539,23 +565,24 @@ remove_button.grid(row=3,column=1,padx=5,pady=5)
 clear_button.grid(row=4,column=1,padx=5,pady=5)
 import_button.grid(row=5,column=1,padx=5,pady=5)
 
-listbox2.grid(row=1,rowspan=5,column=2,padx=10)
+listbox2.grid(row=1,rowspan=5,column=2,padx=5,pady=10)
 
 #sel_button_frame.grid(row=2,column=0,columnspan=2,pady=10,padx=10)
-plot_frame.grid(row=3,rowspan=2,column=0,columnspan=2,padx=10,pady=10)
+plot_frame.grid(row=0,rowspan=4,column=4,columnspan=1,padx=5,pady=5)
 canvas.get_tk_widget().grid(row=0,column=0)
 
-star_ha_frame.grid(row=3,column=2,padx=5,pady=5)
+star_ha_frame.grid(row=0,rowspan=1,column=5,padx=5,pady=5)
 dropdown_stars.grid(row=0,column=0)
 ha_entry_box.grid(row=1,column=0,padx=5,pady=5)
 export_button.grid(row=2,column=0,padx=5,pady=5)
 
-offset_frame.grid(row=4, column=2,padx=5,pady=10)
+offset_frame.grid(row=1, rowspan=2,column=5,padx=5,pady=5)
 R1.grid(row=0,column=0,padx=5,pady=5)
 R2.grid(row=1,column=0,padx=5,pady=5)
 R3.grid(row=2,column=0,padx=5,pady=5)
 R4.grid(row=3,column=0,padx=5,pady=5)
 R5.grid(row=4,column=0,padx=5,pady=5)
+histo_button.grid(row=5,column=0,padx=5,pady=10)
 
 
 
