@@ -86,7 +86,7 @@ def show_date(*args):
 def addlog():
     # Note here that Tkinter passes an event object to onselect()
     indices = listbox.curselection()
-    selected_logs = []
+    selected_logs = list(listbox2.get(0,END))
     for index in indices:
         value = listbox.get(index)
         selected_logs.append(value)
@@ -154,6 +154,7 @@ def import_logs():
         
         # Begin data import
         data = []
+        fsnr_data = []
     
         # Pull in starlog data, skipping the header and also skipping the fsnr lines. Does not
         # work for a file which has multiple headers at the moment.
@@ -163,24 +164,31 @@ def import_logs():
                 content = f.read().split('\nUT_date: ')[1:]
                 for c in content:
                     data.append(c.split('\n')[17::2])
+                    fsnr_data.append(c.split('\n')[18::2])
+                    
     
         #Combine all the starlogs into one list of entries, then split each entry
         #which is a single string containing the entire entry into a list of the individual column entries
         for i in range(len(data)):
             data[i] = [data[i][j].split() for j in range(len(data[i]))]
+            fsnr_data[i] = [fsnr_data[i][j].split() for j in range(len(fsnr_data[i]))]
             for j in range(len(data)):
                 if data[j][-1] == []:
                     data[j] = data[j][0:-1]
+                    fsnr_data[j] = fsnr_data[j][0:-1]
         
         # Pull out only the coherent scans
         data_clean = []
+        fsnr_data_clean = []
         for i in range(len(data)):
             for j in range(len(data[i])):
-                if data[i][j][1] != 'I' and data[i][j][9] != '-1.000' and data[i][j][12] != '-1.000': # the and statements are in case a non-coherent entry was under a different label
+                offset_mean = np.mean([float(data[i][j][k]) for k in np.arange(9,14)])
+                if data[i][j][1] != 'I' and offset_mean != -1.0: #the and statements are in case a non-coherent entry was under a different label
                     data_clean.append(data[i][j])
-        
+                    fsnr_data_clean.append(fsnr_data[i][j])
+
         # Make arrays of the star names, hour angles, and offsets for each individual entry
-        global angles; global b1; global b2; global b3; global b4; global b5
+        global b1; global b2; global b3; global b4; global b5
         stars = np.array([data_clean[i][2] for i in range(len(data_clean))])
         angles = np.array([data_clean[i][4] for i in range(len(data_clean))]).astype(np.float)
         b1 = np.array([data_clean[i][9] for i in range(len(data_clean))]).astype(np.float)
@@ -189,6 +197,13 @@ def import_logs():
         b4 = np.array([data_clean[i][12] for i in range(len(data_clean))]).astype(np.float)
         b5 = np.array([data_clean[i][13] for i in range(len(data_clean))]).astype(np.float)
         
+        global b1_fsnr; global b2_fsnr; global b3_fsnr; global b4_fsnr; global b5_fsnr
+        b1_fsnr = np.array([fsnr_data_clean[i][0] for i in range(len(fsnr_data_clean)) if fsnr_data_clean[i][0] != '-1.000']).astype(np.float)
+        b2_fsnr = np.array([fsnr_data_clean[i][1] for i in range(len(fsnr_data_clean)) if fsnr_data_clean[i][1] != '-1.000']).astype(np.float)
+        b3_fsnr = np.array([fsnr_data_clean[i][2] for i in range(len(fsnr_data_clean)) if fsnr_data_clean[i][2] != '-1.000']).astype(np.float)
+        b4_fsnr = np.array([fsnr_data_clean[i][3] for i in range(len(fsnr_data_clean)) if fsnr_data_clean[i][3] != '-1.000']).astype(np.float)
+        b5_fsnr = np.array([fsnr_data_clean[i][4] for i in range(len(fsnr_data_clean)) if fsnr_data_clean[i][4] != '-1.000']).astype(np.float)
+
         # Dictionaries to contain the hour angles and offsets for each observation for each unique star
         unique_stars = list(set(stars))
         global b1_dict; global b2_dict; global b3_dict; global b4_dict; global b5_dict; global angles_dict
@@ -364,20 +379,25 @@ def plot_offsets(*args):
                 global plot2
                 plot2 = fig.add_subplot(111)
     
-                # Scatter plot the hour angles and offsets for the star, also plot quadratic fit
+                # Histograms of fsnrs for each baseline
+                if len(baselines) == 1:
+                    alp = 1
+                else:
+                    alp = 0.25
+
                 if 1 in baselines:
-                    plot2.hist(b1, label='b1, mean = %.3f' % np.mean(b1), color='lime')
+                    plot2.hist(b1_fsnr, label='b1, mean = %.1f' % np.mean(b1_fsnr), color='lime',alpha=alp)
                 if 2 in baselines:
-                    plot2.hist(b2, label='b2, mean = %.3f' % np.mean(b2), color='red')
+                    plot2.hist(b2_fsnr, label='b2, mean = %.1f' % np.mean(b2_fsnr), color='red', alpha=alp)
                 if 3 in baselines:
-                    plot2.hist(b3, label='b3, mean = %.3f' % np.mean(b3), color='orange')
+                    plot2.hist(b3_fsnr, label='b3, mean = %.1f' % np.mean(b3_fsnr), color='orange', alpha=alp)
                 if 4 in baselines:
-                    plot2.hist(b4, label='b4, mean = %.3f' % np.mean(b4), color='blue')
+                    plot2.hist(b4_fsnr, label='b4, mean = %.1f' % np.mean(b4_fsnr), color='blue', alpha=alp)
                 if 5 in baselines:
-                    plot2.hist(b5, label='b5, mean = %.3f' % np.mean(b5), color='magenta')
+                    plot2.hist(b5_fsnr, label='b5, mean = %.1f' % np.mean(b5_fsnr), color='magenta', alpha=alp)
                     
-                plot2.set_title('Baseline Offsets for Targets in Selected Logs')
-                plot2.set_xlabel('Baseline Offset (mm)', fontsize=12)
+                plot2.set_title('FSNRs for Targets in Selected Logs')
+                plot2.set_xlabel('FSNR', fontsize=12)
                 plot2.axes.tick_params(labelsize=10)
                 plot2.axes.legend(fontsize=8,frameon=False)
     except NameError or KeyError:
@@ -435,7 +455,7 @@ instructions = """Welcome to PyBOC, the Python Baseline Offset Calculator Tool f
 2. Add or remove starLogs from your selection using the buttons, then click 'Import Logs.'
 3. Select the star and baselines to calculate offsets for.
 5. Input the hour angle and hit 'Enter.' The calculated offsets will be displayed in the colored boxes.
-6. Select 'Display Offset Histograms' to show histograms of the offsets on a baseline for all targets
+6. Select 'Display FSNR Histograms' to show histograms of the FSNRs on a baseline for all targets
    in the selected logs.
 7. Use 'Save Figure' to save the currently displayed figure."""
 
@@ -533,7 +553,7 @@ R4 = Checkbutton(offset_frame, text="b4: -1.000", variable=bvar4, onvalue=4, off
 R5 = Checkbutton(offset_frame, text="b5: -1.000", variable=bvar5, onvalue=5, offvalue=0,
                   command=calculate_offsets,activebackground='magenta',bg='magenta', fg='black',bd=5,width=10)
 
-histo_button = Checkbutton(offset_frame, text='Display Offset\nHistograms', variable=histvar, command=plot_offsets,width=15,onvalue=1,offvalue=0)
+histo_button = Checkbutton(offset_frame, text='Display FSNR\nHistograms', variable=histvar, command=plot_offsets,width=15,onvalue=1,offvalue=0)
 # Plotting area
 # the figure that will contain the plot
 fig = Figure(figsize=(6,5),dpi=100)
