@@ -2,6 +2,11 @@
 
 # Changelog for baseline_offset_gui.py
 
+08/13/2021
+
+1. Updated histogram capability to instead plot histogram of FSNRs of all targets for a given baseline.
+2. Updated data importing to more robustly check for/throw out incoherent scans (was previously only checking baselines 1/4).
+
 08/11/2021
 
 1. Changed flow of layout from vertical to horizontal to address clipping issues.
