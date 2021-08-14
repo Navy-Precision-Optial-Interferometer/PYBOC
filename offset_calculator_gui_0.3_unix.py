@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+ 
+=======
+>>>>>>> cda67f631cdf326f8705d4714750b0d5b5b60d80
 # -*- coding: utf-8 -*-
 """
 Created on Wed Jun 23 19:15:07 2021
@@ -33,7 +37,11 @@ unique_stars = [None]
 ##### GUI WINDOW SETUP #####
 
 window = Tk()
+<<<<<<< HEAD
+window.title('PyBOC')
+=======
 window.title('Baseline Offset Calculator')
+>>>>>>> cda67f631cdf326f8705d4714750b0d5b5b60d80
     
 date_frame = Frame( window)
 selection_frame = Frame(window)
@@ -133,6 +141,8 @@ def import_logs():
         R5.configure(text="b5: -1.000")
         ha_var.set('Hour Angle')
         
+<<<<<<< HEAD
+=======
         # Activate function callbacks for the offset checkboxes and star dropdown
         # global trace1; global trace2; global trace3; global trace4; global trace5
         # trace1 = bvar1.trace('w', plot_offsets)
@@ -145,6 +155,7 @@ def import_logs():
         # startrace = starvar.trace('w',plot_offsets)
         # startrace_offset = starvar.trace('w',calculate_offsets)
         
+>>>>>>> cda67f631cdf326f8705d4714750b0d5b5b60d80
         # clear and redraw the plotting canvas
         fig.clear()
         canvas.draw()
@@ -156,8 +167,13 @@ def import_logs():
         data = []
         fsnr_data = []
     
+<<<<<<< HEAD
+        # Pull in starlog data, skipping the header. Should work even for starlogs
+        # with multiple headers.
+=======
         # Pull in starlog data, skipping the header and also skipping the fsnr lines. Does not
         # work for a file which has multiple headers at the moment.
+>>>>>>> cda67f631cdf326f8705d4714750b0d5b5b60d80
         
         for starlog in starlogs:
             with open(starlog, 'r') as f:
@@ -167,8 +183,13 @@ def import_logs():
                     fsnr_data.append(c.split('\n')[18::2])
                     
     
+<<<<<<< HEAD
+        # Combine all the starlogs into one list of entries, then split each entry
+        # which is a single string containing the entire entry into a list of the individual column entries
+=======
         #Combine all the starlogs into one list of entries, then split each entry
         #which is a single string containing the entire entry into a list of the individual column entries
+>>>>>>> cda67f631cdf326f8705d4714750b0d5b5b60d80
         for i in range(len(data)):
             data[i] = [data[i][j].split() for j in range(len(data[i]))]
             fsnr_data[i] = [fsnr_data[i][j].split() for j in range(len(fsnr_data[i]))]
@@ -183,7 +204,11 @@ def import_logs():
         for i in range(len(data)):
             for j in range(len(data[i])):
                 offset_mean = np.mean([float(data[i][j][k]) for k in np.arange(9,14)])
+<<<<<<< HEAD
+                if data[i][j][1] != 'I' and offset_mean != -1.0: # as long as a fringe was recorded on at least one baseline the mean of the offsets won't be -1.0
+=======
                 if data[i][j][1] != 'I' and offset_mean != -1.0: #the and statements are in case a non-coherent entry was under a different label
+>>>>>>> cda67f631cdf326f8705d4714750b0d5b5b60d80
                     data_clean.append(data[i][j])
                     fsnr_data_clean.append(fsnr_data[i][j])
 
@@ -197,12 +222,22 @@ def import_logs():
         b4 = np.array([data_clean[i][12] for i in range(len(data_clean))]).astype(np.float)
         b5 = np.array([data_clean[i][13] for i in range(len(data_clean))]).astype(np.float)
         
+<<<<<<< HEAD
+        # Make arrays of the fsnrs for each baseline
+        global b1_fsnr; global b2_fsnr; global b3_fsnr; global b4_fsnr; global b5_fsnr
+        b1_fsnr = np.array([fsnr_data_clean[i][0] for i in range(len(fsnr_data_clean))]).astype(np.float)
+        b2_fsnr = np.array([fsnr_data_clean[i][1] for i in range(len(fsnr_data_clean))]).astype(np.float)
+        b3_fsnr = np.array([fsnr_data_clean[i][2] for i in range(len(fsnr_data_clean))]).astype(np.float)
+        b4_fsnr = np.array([fsnr_data_clean[i][3] for i in range(len(fsnr_data_clean))]).astype(np.float)
+        b5_fsnr = np.array([fsnr_data_clean[i][4] for i in range(len(fsnr_data_clean))]).astype(np.float)
+=======
         global b1_fsnr; global b2_fsnr; global b3_fsnr; global b4_fsnr; global b5_fsnr
         b1_fsnr = np.array([fsnr_data_clean[i][0] for i in range(len(fsnr_data_clean)) if fsnr_data_clean[i][0] != '-1.000']).astype(np.float)
         b2_fsnr = np.array([fsnr_data_clean[i][1] for i in range(len(fsnr_data_clean)) if fsnr_data_clean[i][1] != '-1.000']).astype(np.float)
         b3_fsnr = np.array([fsnr_data_clean[i][2] for i in range(len(fsnr_data_clean)) if fsnr_data_clean[i][2] != '-1.000']).astype(np.float)
         b4_fsnr = np.array([fsnr_data_clean[i][3] for i in range(len(fsnr_data_clean)) if fsnr_data_clean[i][3] != '-1.000']).astype(np.float)
         b5_fsnr = np.array([fsnr_data_clean[i][4] for i in range(len(fsnr_data_clean)) if fsnr_data_clean[i][4] != '-1.000']).astype(np.float)
+>>>>>>> cda67f631cdf326f8705d4714750b0d5b5b60d80
 
         # Dictionaries to contain the hour angles and offsets for each observation for each unique star
         unique_stars = list(set(stars))
@@ -212,6 +247,17 @@ def import_logs():
         b3_dict = {star: [] for star in unique_stars}
         b4_dict = {star: [] for star in unique_stars}
         b5_dict = {star: [] for star in unique_stars}
+<<<<<<< HEAD
+        
+        # Dictionaries to contain fsnrs for each observation
+        global b1_fsnr_dict; global b2_fsnr_dict; global b3_fsnr_dict; global b4_fsnr_dict; global b5_fsnr_dict
+        b1_fsnr_dict = {star: [] for star in unique_stars}
+        b2_fsnr_dict = {star: [] for star in unique_stars}
+        b3_fsnr_dict = {star: [] for star in unique_stars}
+        b4_fsnr_dict = {star: [] for star in unique_stars}
+        b5_fsnr_dict = {star: [] for star in unique_stars}
+=======
+>>>>>>> cda67f631cdf326f8705d4714750b0d5b5b60d80
         angles_dict = {star: [] for star in unique_stars}
         
         # Sort the starlog entries into the dictionaries
@@ -223,6 +269,19 @@ def import_logs():
                     b3_dict[star].append(b3[i])
                     b4_dict[star].append(b4[i])
                     b5_dict[star].append(b5[i])
+<<<<<<< HEAD
+                    if b1_fsnr[i] != -1.0:
+                        b1_fsnr_dict[star].append(b1_fsnr[i])
+                    if b2_fsnr[i] != -1.0:
+                        b2_fsnr_dict[star].append(b2_fsnr[i])
+                    if b3_fsnr[i] != -1.0:
+                        b3_fsnr_dict[star].append(b3_fsnr[i])
+                    if b4_fsnr[i] != -1.0:
+                        b4_fsnr_dict[star].append(b4_fsnr[i])
+                    if b5_fsnr[i] != -1.0:
+                        b5_fsnr_dict[star].append(b5_fsnr[i])
+=======
+>>>>>>> cda67f631cdf326f8705d4714750b0d5b5b60d80
                     angles_dict[star].append(angles[i])
                     
         # Calculate polynomial fits
@@ -250,6 +309,8 @@ def clear_selection():
     
     '''Clear all selections except date range.'''
     
+<<<<<<< HEAD
+=======
     # Remove the value tracers for the offset displays and star dropdown
     # so they don't call any functions when their text is reset to default
     # bvar1.trace_remove('write',trace1)
@@ -260,6 +321,7 @@ def clear_selection():
     # starvar.trace_remove('write',startrace)
     # starvar.trace_remove('write',startrace_offset)
     
+>>>>>>> cda67f631cdf326f8705d4714750b0d5b5b60d80
     # Deselect all offset checkboxes and reset text to default
     R1.deselect()
     R2.deselect()
@@ -327,7 +389,12 @@ def selected_baselines(*args):
 def plot_offsets(*args):
     
     '''Plot the offset data and quadratic fits for each
+<<<<<<< HEAD
+    selected baseline, or plot histograms of the fsnrs
+    for a target if the option is selected'''
+=======
     selected baseline'''
+>>>>>>> cda67f631cdf326f8705d4714750b0d5b5b60d80
 
     # Clear the figure
     fig.clear()
@@ -340,7 +407,11 @@ def plot_offsets(*args):
         if len(baselines) == 0: # clear figure if no baselines selected
             fig.clear()
         else: 
+<<<<<<< HEAD
+            # Offsets plot
+=======
             # create plot
+>>>>>>> cda67f631cdf326f8705d4714750b0d5b5b60d80
             if histvar.get() == 0 and starvar.get() != 'Pick a Star':
                 global plot1
                 plot1 = fig.add_subplot(111)
@@ -375,17 +446,40 @@ def plot_offsets(*args):
                 plot1.set_xlabel('Hour Angle', fontsize=12)
                 plot1.axes.tick_params(labelsize=10)
                 plot1.axes.legend(fontsize=8,frameon=False)
+<<<<<<< HEAD
+                
+            # fsnr histograms    
+=======
+>>>>>>> cda67f631cdf326f8705d4714750b0d5b5b60d80
             elif histvar.get() == 1:
                 global plot2
                 plot2 = fig.add_subplot(111)
     
                 # Histograms of fsnrs for each baseline
+<<<<<<< HEAD
+                if len(baselines) == 1: # make bars partially transparent if there is more than one baseline selected
+=======
                 if len(baselines) == 1:
+>>>>>>> cda67f631cdf326f8705d4714750b0d5b5b60d80
                     alp = 1
                 else:
                     alp = 0.25
 
                 if 1 in baselines:
+<<<<<<< HEAD
+                    plot2.hist(b1_fsnr_dict[star], label='b1, mean = %.1f' % np.mean(b1_fsnr_dict[star]), color='lime',alpha=alp)
+                if 2 in baselines:
+                    plot2.hist(b2_fsnr_dict[star], label='b2, mean = %.1f' % np.mean(b2_fsnr_dict[star]), color='red', alpha=alp)
+                if 3 in baselines:
+                    plot2.hist(b3_fsnr_dict[star], label='b3, mean = %.1f' % np.mean(b3_fsnr_dict[star]), color='orange', alpha=alp)
+                if 4 in baselines:
+                    plot2.hist(b4_fsnr_dict[star], label='b4, mean = %.1f' % np.mean(b4_fsnr_dict[star]), color='blue', alpha=alp)
+                if 5 in baselines:
+                    plot2.hist(b5_fsnr_dict[star], label='b5, mean = %.1f' % np.mean(b5_fsnr_dict[star]), color='magenta', alpha=alp)
+                 
+                # Other plot setup
+                plot2.set_title(star, fontsize=12)
+=======
                     plot2.hist(b1_fsnr, label='b1, mean = %.1f' % np.mean(b1_fsnr), color='lime',alpha=alp)
                 if 2 in baselines:
                     plot2.hist(b2_fsnr, label='b2, mean = %.1f' % np.mean(b2_fsnr), color='red', alpha=alp)
@@ -397,13 +491,19 @@ def plot_offsets(*args):
                     plot2.hist(b5_fsnr, label='b5, mean = %.1f' % np.mean(b5_fsnr), color='magenta', alpha=alp)
                     
                 plot2.set_title('FSNRs for Targets in Selected Logs')
+>>>>>>> cda67f631cdf326f8705d4714750b0d5b5b60d80
                 plot2.set_xlabel('FSNR', fontsize=12)
                 plot2.axes.tick_params(labelsize=10)
                 plot2.axes.legend(fontsize=8,frameon=False)
     except NameError or KeyError:
         fig.clear()
         pass
+<<<<<<< HEAD
+    
+    # redraw the canvas with updated plot
+=======
     # redraw the canvas with plots on it
+>>>>>>> cda67f631cdf326f8705d4714750b0d5b5b60d80
     canvas.draw()
         
 def calculate_offsets(*args):
@@ -450,21 +550,32 @@ def save_plot():
         fig.savefig(a)
 
 ##### CREATE GUI WIDGETS AND THEIR FUNCTION CALLBACKS #####
+<<<<<<< HEAD
+instructions = """Welcome to PyBOC, the Python Baseline Offset Calculator tool for NPOI. To use, follow the instructions below:\n
+=======
 instructions = """Welcome to PyBOC, the Python Baseline Offset Calculator Tool for NPOI. To use, follow the instructions below:\n
+>>>>>>> cda67f631cdf326f8705d4714750b0d5b5b60d80
 1. Select the date range containing the starLogs you wish to use.
 2. Add or remove starLogs from your selection using the buttons, then click 'Import Logs.'
 3. Select the star and baselines to calculate offsets for.
 5. Input the hour angle and hit 'Enter.' The calculated offsets will be displayed in the colored boxes.
+<<<<<<< HEAD
+6. Select 'Display FSNR Histograms' to show a histogram of the FSNRs for a target on the selected baselines.
+=======
 6. Select 'Display FSNR Histograms' to show histograms of the FSNRs on a baseline for all targets
    in the selected logs.
+>>>>>>> cda67f631cdf326f8705d4714750b0d5b5b60d80
 7. Use 'Save Figure' to save the currently displayed figure."""
 
     
 T1 = Label(date_frame,height=10,width=95,text=instructions,borderwidth=2,relief='solid')
 
+<<<<<<< HEAD
+=======
 # logo= PhotoImage('banner_logos.png')
 # T2 = Label(image=logo)
 
+>>>>>>> cda67f631cdf326f8705d4714750b0d5b5b60d80
 # Date range dropdowns    
 yearvar = StringVar(date_frame)
 yearvar2 = StringVar(date_frame)
@@ -484,7 +595,10 @@ monthvar2.trace('w', show_date)
 label_avail = Label(selection_frame,text='Available StarLogs')
 label_select = Label(selection_frame,text='Selected Starlogs')
 
+<<<<<<< HEAD
+=======
 
+>>>>>>> cda67f631cdf326f8705d4714750b0d5b5b60d80
 dropdown_year = OptionMenu(date_frame, yearvar, *years)
 dropdown_months = OptionMenu(date_frame, monthvar, *months)
 dropdown_year2 = OptionMenu(date_frame, yearvar2, *years)
@@ -496,7 +610,10 @@ dropdown_months2.config(width=12)
 
 # Boxes for all logs in date range and then selected logs in range
 listbox = Listbox(selection_frame, width=35, height=10, selectmode='extended')
+<<<<<<< HEAD
+=======
 #listbox.bind('<<ListboxSelect>>', onselect_logs)
+>>>>>>> cda67f631cdf326f8705d4714750b0d5b5b60d80
 listbox2 = Listbox(selection_frame,width=35, height=10, selectmode='multiple')
 
 # Import logs and clear selection buttons
@@ -506,11 +623,19 @@ remove_button = Button(selection_frame,text='Remove <', command=remove,width=15)
 import_button = Button(selection_frame, text = 'Import Logs', command=import_logs, width=15,bg='black',fg='white')
 clear_button = Button(selection_frame, text = 'Remove All <<', command=clear_selection,width=15)
 export_button = Button(star_ha_frame,text='Save Figure',command=save_plot,width=15) 
+<<<<<<< HEAD
+
+=======
+>>>>>>> cda67f631cdf326f8705d4714750b0d5b5b60d80
 # Star selection dropdown and hour angle entry box  
 starvar = StringVar(star_ha_frame)
 starvar.set('Pick a Star')
 
+<<<<<<< HEAD
+global startrace; global startrace_offset
+=======
 global startrace;global startrace_offset
+>>>>>>> cda67f631cdf326f8705d4714750b0d5b5b60d80
 startrace = starvar.trace('w',plot_offsets)
 startrace_offset = starvar.trace('w',calculate_offsets)
 
@@ -539,9 +664,12 @@ trace3 = bvar3.trace('w', plot_offsets)
 trace4 = bvar4.trace('w', plot_offsets)
 trace5 = bvar5.trace('w', plot_offsets)
 
+<<<<<<< HEAD
+=======
 histvar=IntVar(offset_frame)
 hist_trace = histvar.trace('w',plot_offsets)
 
+>>>>>>> cda67f631cdf326f8705d4714750b0d5b5b60d80
 R1 = Checkbutton(offset_frame, text="b1: -1.000", variable=bvar1, onvalue=1, offvalue=0,
                   command=calculate_offsets,activebackground='lime',bg='lime',fg='black',bd=5,width=10)
 R2 = Checkbutton(offset_frame, text="b2: -1.000", variable=bvar2, onvalue=2, offvalue=0,
@@ -553,7 +681,16 @@ R4 = Checkbutton(offset_frame, text="b4: -1.000", variable=bvar4, onvalue=4, off
 R5 = Checkbutton(offset_frame, text="b5: -1.000", variable=bvar5, onvalue=5, offvalue=0,
                   command=calculate_offsets,activebackground='magenta',bg='magenta', fg='black',bd=5,width=10)
 
+<<<<<<< HEAD
+# Histogram checkbox 
+histvar=IntVar(offset_frame)
+hist_trace = histvar.trace('w',plot_offsets)
+
 histo_button = Checkbutton(offset_frame, text='Display FSNR\nHistograms', variable=histvar, command=plot_offsets,width=15,onvalue=1,offvalue=0)
+
+=======
+histo_button = Checkbutton(offset_frame, text='Display FSNR\nHistograms', variable=histvar, command=plot_offsets,width=15,onvalue=1,offvalue=0)
+>>>>>>> cda67f631cdf326f8705d4714750b0d5b5b60d80
 # Plotting area
 # the figure that will contain the plot
 fig = Figure(figsize=(6,5),dpi=100)
@@ -569,7 +706,10 @@ canvas.get_tk_widget().configure(highlightbackground='black',highlightthickness=
 
 date_frame.grid(row=0,column=0,columnspan=4,pady=5,padx=5)
 T1.grid(row=0,column=0,columnspan=4,padx=5,pady=5)
+<<<<<<< HEAD
+=======
 # T2.grid(row=0,column=1,columnspan=2,padx=5,pady=5)
+>>>>>>> cda67f631cdf326f8705d4714750b0d5b5b60d80
 dropdown_year.grid(row=1,column=0,pady=5)
 dropdown_months.grid(row=1,column=1)
 dropdown_year2.grid(row=1,column=2)
@@ -579,15 +719,23 @@ selection_frame.grid(row=1, column=0,columnspan=4,pady=5,padx=5)
 label_avail.grid(row=0,column=0,padx=5,pady=5)
 label_select.grid(row=0,column=2,padx=5,pady=5)
 listbox.grid(row=1,rowspan=5,column=0,padx=5)
+<<<<<<< HEAD
+listbox2.grid(row=1,rowspan=5,column=2,padx=5)
+
+=======
+>>>>>>> cda67f631cdf326f8705d4714750b0d5b5b60d80
 add_button.grid(row=1,column=1,padx=5,pady=5)
 addall_button.grid(row=2,column=1,padx=5,pady=5)
 remove_button.grid(row=3,column=1,padx=5,pady=5)
 clear_button.grid(row=4,column=1,padx=5,pady=5)
 import_button.grid(row=5,column=1,padx=5,pady=5)
 
+<<<<<<< HEAD
+=======
 listbox2.grid(row=1,rowspan=5,column=2,padx=5,pady=10)
 
 #sel_button_frame.grid(row=2,column=0,columnspan=2,pady=10,padx=10)
+>>>>>>> cda67f631cdf326f8705d4714750b0d5b5b60d80
 plot_frame.grid(row=0,rowspan=4,column=4,columnspan=1,padx=5,pady=5)
 canvas.get_tk_widget().grid(row=0,column=0)
 
@@ -604,7 +752,12 @@ R4.grid(row=3,column=0,padx=5,pady=5)
 R5.grid(row=4,column=0,padx=5,pady=5)
 histo_button.grid(row=5,column=0,padx=5,pady=10)
 
+<<<<<<< HEAD
+##### RUN #####
+window.mainloop()
+=======
 
 
 ##### RUN #####
 window.mainloop()
+>>>>>>> cda67f631cdf326f8705d4714750b0d5b5b60d80
