@@ -14,11 +14,10 @@ from tkinter.filedialog import asksaveasfilename
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 import webbrowser
-from astroquery.simbad import Simbad
+#from astroquery.simbad import Simbad
 from astropy.time import Time
 import astropy.units as u
 import astropy.coordinates as coords
-from tkinter import simpledialog
 
 colors = ['black', 'lime', 'red', 'orange', 'blue', 'magenta']
 
@@ -203,12 +202,10 @@ def import_logs():
             elif star[0:3] == 'BSC':
                 star_query = 'HR ' + star[3:]
 
-            ra_string = Simbad.query_object(star_query)['RA'][0]
-            ra_hour = coords.Angle(ra_string[0:2] + 'h' + ra_string[3:5] + 'm' + ra_string[6:] + 's').hour
-            
+            ra_hour = coords.SkyCoord.from_name(star_query).ra.hour            
             star_ra[star] = ra_hour
         
-        print(star_ra)
+        #print(star_ra)
         angles = np.array([data_clean[i][4] for i in range(len(data_clean))]).astype(np.float)
         
         global all_offsets
@@ -475,6 +472,10 @@ def get_hour_angle(*args):
         LST = coords.Angle(t.sidereal_time('apparent')).hour
         ra = star_ra[star]
         hour_angle = LST - ra
+        if hour_angle < -12:
+            hour_angle += 24
+        elif hour_angle > 12:
+            hour_angle -= 24
         ha_var.set(str(round(hour_angle, 3)))
         
         ha_entry_box.after(10000,get_hour_angle)
