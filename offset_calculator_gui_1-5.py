@@ -455,7 +455,11 @@ def calculate_offsets(*args):
         for i in np.arange(1,6):
             if i in baselines:
                 try:
-                    check_list[i-1].configure(text='b' + str(i) + ': %.3f' % poly_calc(polydict[i][star][0],polydict[i][star][1],polydict[i][star][2],hour_angle))
+                    try:
+                        current_offset = (poly_calc(polydict[i][star][0],polydict[i][star][1],polydict[i][star][2],hour_angle)) + (int(off_list[i-1].get())/1000)
+                    except ValueError:
+                        current_offset = poly_calc(polydict[i][star][0],polydict[i][star][1],polydict[i][star][2],hour_angle)
+                    check_list[i-1].configure(text='b' + str(i) + ': %.3f' % current_offset)
                     
                 except IndexError:
                     check_list[i-1].deselect()
@@ -592,7 +596,36 @@ R4 = Checkbutton(offset_frame, text="b4: -1.000", variable=bvar4, onvalue=4, off
 R5 = Checkbutton(offset_frame, text="b5: -1.000", variable=bvar5, onvalue=5, offvalue=0,
                   command=calculate_offsets,activebackground='magenta',bg='magenta', fg='black',selectcolor='silver',bd=5,width=10)
 
+offlabel = Label(offset_frame, text="Calculated\nOffsets\n(mm)")
+offlabel2 = Label(offset_frame, text="Additional\nOffset\n(microns)")
+
+off1 = StringVar(offset_frame)
+off1.set('0')
+off1.trace('w',calculate_offsets)
+offset1box = Entry(offset_frame,textvariable=off1,width=5)
+
+off2 = StringVar(offset_frame)
+off2.set('0')
+off2.trace('w',calculate_offsets)
+offset2box = Entry(offset_frame,textvariable=off2,width=5)
+
+off3 = StringVar(offset_frame)
+off3.set('0')
+off3.trace('w',calculate_offsets)
+offset3box = Entry(offset_frame,textvariable=off3,width=5)
+
+off4 = StringVar(offset_frame)
+off4.set('0')
+off4.trace('w',calculate_offsets)
+offset4box = Entry(offset_frame,textvariable=off4,width=5)
+
+off5 = StringVar(offset_frame)
+off5.set('0')
+off5.trace('w',calculate_offsets)
+offset5box = Entry(offset_frame,textvariable=off5,width=5)
+
 check_list = [R1, R2, R3, R4, R5]
+off_list = [off1, off2, off3, off4, off5]
 # Histogram checkbox 
 histvar=IntVar(offset_frame)
 hist_trace = histvar.trace('w',plot_offsets)
@@ -638,18 +671,25 @@ link1.grid(row=0,column=1)
 plot_frame.grid(row=0,rowspan=4,column=4,columnspan=1,padx=5,pady=5)
 canvas.get_tk_widget().grid(row=0,column=0)
 
-star_ha_frame.grid(row=0,rowspan=1,column=5,padx=5,pady=5)
+star_ha_frame.grid(row=0,column=5,columnspan=2,padx=5,pady=5)
 dropdown_stars.grid(row=0,column=0)
 ha_entry_box.grid(row=1,column=0,padx=5,pady=5)
 export_button.grid(row=2,column=0,padx=5,pady=5)
 
-offset_frame.grid(row=1, rowspan=2,column=5,padx=5,pady=5)
-R1.grid(row=0,column=0,padx=5,pady=5)
-R2.grid(row=1,column=0,padx=5,pady=5)
-R3.grid(row=2,column=0,padx=5,pady=5)
-R4.grid(row=3,column=0,padx=5,pady=5)
-R5.grid(row=4,column=0,padx=5,pady=5)
-histo_button.grid(row=5,column=0,padx=5,pady=10)
+offset_frame.grid(row=1, rowspan=2,column=5,columnspan=2,padx=5,pady=5)
+offlabel.grid(row=0, column=0, padx=5, pady=5)
+R1.grid(row=1,column=0,padx=5,pady=5)
+R2.grid(row=2,column=0,padx=5,pady=5)
+R3.grid(row=3,column=0,padx=5,pady=5)
+R4.grid(row=4,column=0,padx=5,pady=5)
+R5.grid(row=5,column=0,padx=5,pady=5)
+offlabel2.grid(row=0,column=1, padx=5,pady=5)
+offset1box.grid(row=1, column=1, padx=5,pady=5)
+offset2box.grid(row=2, column=1, padx=5,pady=5)
+offset3box.grid(row=3, column=1, padx=5,pady=5)
+offset4box.grid(row=4, column=1, padx=5,pady=5)
+offset5box.grid(row=5, column=1, padx=5,pady=5)
+histo_button.grid(row=6,column=0,columnspan=2,padx=5,pady=10)
 
 ##### RUN #####
 window.mainloop()
