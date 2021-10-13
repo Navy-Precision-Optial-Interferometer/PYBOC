@@ -1,6 +1,17 @@
 # erin-projects
 
-# Changelog for baseline_offset_gui.py
+# Changelog for offset_calculator_gui-1-5.py and PYBOC.exe
+
+10/04/2021
+
+1. Now has automatic hour angle/offset calculation, which will update every 10 seconds.
+2. Now filters somewhat better for outlier data points - mainly those "-1.000s." At this point, if you run into a point of legitimate data that appears to be an outlier that is significantly affecting the fit, the best solution is to find it in the starlog files and delete it. This will probably remain the best solution as point and click point deletion is Difficult.  I am working on adding a bit more interactivity/"meta"data to the plot that will make tracking these points down in the starlog files easier.
+3. Now handles "empty" star logs - no data, just header - correctly.
+4. Now handles missing observation type identifiers - I, C, ., B, etc. - by inserting an 'X'.
+5. No more polynomial fits in the plot legend.
+6. Updated the offset checkboxes to be more uniform in background color so b4 didn't stand out/seem like you couldn't use it.
+7. Now has credit and link to the Confluence documentation page. Instructions in the GUI also updated.
+8. If you select a baseline that doesn't have data in the selected starlogs - i.e, it's uniformly -1.000 for every data point - it will no longer plot, and the checkbox will automatically deselect.
 
 08/13/2021
 
