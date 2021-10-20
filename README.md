@@ -2,6 +2,10 @@
 
 # Changelog for offset_calculator_gui-1-5.py and PYBOC.exe
 
+10/19/2021
+1. Additional input boxes added next to the offset checkboxes to allow for adding an extra "diurnal" offset - e.g., if the offsets you are finding seem to be consistently about 200 microns off from what PYBOC is predicting, you can put that in these boxes and PYBOC will account for it.
+2. If you hover over a data point on the plot, it will now display an annotation containing the name of the starlog file the data point came from and its observation number. This is to allow easy idenfitication and manual deletion of outlier points, since programmatic deletion proved very difficult.
+
 10/04/2021
 
 1. Now has automatic hour angle/offset calculation, which will update every 10 seconds.
