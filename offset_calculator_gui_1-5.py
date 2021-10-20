@@ -11,13 +11,14 @@ import numpy as np
 import os
 from tkinter import *
 from tkinter.filedialog import asksaveasfilename
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 from matplotlib.figure import Figure
 import webbrowser
 #from astroquery.simbad import Simbad
 from astropy.time import Time
 import astropy.units as u
 import astropy.coordinates as coords
+from itertools import repeat
 
 colors = ['black', 'lime', 'red', 'orange', 'blue', 'magenta']
 
@@ -152,6 +153,8 @@ def import_logs():
         # Begin data import
         data = []
         fsnr_data = []
+        ut_dates = []
+        #print(ut_dates)
     
         # Pull in starlog data, skipping the header. Should work even for starlogs
         # with multiple headers.
@@ -161,9 +164,12 @@ def import_logs():
                 content = f.read().split('\nUT_date: ')[1:]
                 for c in content:
                     data.append(c.split('\n')[17::2])
+                    date_reps = []
+                    date_reps.extend(repeat(starlog[0:16],len(c.split('\n')[17::2])))
+                    ut_dates.append(date_reps)
+                    date_reps=[]
                     fsnr_data.append(c.split('\n')[18::2])
                     
-    
         # Combine all the starlogs into one list of entries, then split each entry
         # which is a single string containing the entire entry into a list of the individual column entries
         for i in range(len(data)):
@@ -179,6 +185,7 @@ def import_logs():
         # Pull out only the coherent scans
         data_clean = []
         fsnr_data_clean = []
+        ut_dates_clean = []
         for i in range(len(data)):
             for j in range(len(data[i])):
                 if len(data[i][j][1]) != 1:
@@ -188,6 +195,7 @@ def import_logs():
                 if data[i][j][1] != 'I' and offset_mean != -1.0: # as long as a fringe was recorded on at least one baseline the mean of the offsets won't be -1.0
                     data_clean.append(data[i][j])
                     fsnr_data_clean.append(fsnr_data[i][j])
+                    ut_dates_clean.append(ut_dates[i][j])
 
         # Make arrays of the star names, hour angles, and offsets for each individual entry
         
@@ -206,22 +214,24 @@ def import_logs():
             star_ra[star] = ra_hour
         
         #print(star_ra)
-        angles = np.array([data_clean[i][4] for i in range(len(data_clean))]).astype(np.float)
+        angles = np.array([float(data_clean[i][4]) for i in range(len(data_clean))])
+        obs_numbers = np.array([int(data_clean[i][0]) for i in range(len(data_clean))])
+        dates_obsnum = list(zip(ut_dates_clean, obs_numbers))
         
         global all_offsets
-        all_offsets = {1: np.array([data_clean[i][9] for i in range(len(data_clean))]).astype(np.float),
-                       2: np.array([data_clean[i][10] for i in range(len(data_clean))]).astype(np.float),
-                       3: np.array([data_clean[i][11] for i in range(len(data_clean))]).astype(np.float),
-                       4: np.array([data_clean[i][12] for i in range(len(data_clean))]).astype(np.float),
-                       5: np.array([data_clean[i][13] for i in range(len(data_clean))]).astype(np.float)}
+        all_offsets = {1: np.array([float(data_clean[i][9]) for i in range(len(data_clean))]),
+                       2: np.array([float(data_clean[i][10]) for i in range(len(data_clean))]),
+                       3: np.array([float(data_clean[i][11]) for i in range(len(data_clean))]),
+                       4: np.array([float(data_clean[i][12]) for i in range(len(data_clean))]),
+                       5: np.array([float(data_clean[i][13]) for i in range(len(data_clean))])}
         
         # Make arrays of the fsnrs for each baseline
         global all_fsnrs
-        all_fsnrs = {1: np.array([fsnr_data_clean[i][0] for i in range(len(fsnr_data_clean))]).astype(np.float),
-                     2: np.array([fsnr_data_clean[i][1] for i in range(len(fsnr_data_clean))]).astype(np.float),
-                     3: np.array([fsnr_data_clean[i][2] for i in range(len(fsnr_data_clean))]).astype(np.float),
-                     4: np.array([fsnr_data_clean[i][3] for i in range(len(fsnr_data_clean))]).astype(np.float),
-                     5: np.array([fsnr_data_clean[i][4] for i in range(len(fsnr_data_clean))]).astype(np.float)}
+        all_fsnrs = {1: np.array([float(fsnr_data_clean[i][0]) for i in range(len(fsnr_data_clean))]),
+                     2: np.array([float(fsnr_data_clean[i][1]) for i in range(len(fsnr_data_clean))]),
+                     3: np.array([float(fsnr_data_clean[i][2]) for i in range(len(fsnr_data_clean))]),
+                     4: np.array([float(fsnr_data_clean[i][3]) for i in range(len(fsnr_data_clean))]),
+                     5: np.array([float(fsnr_data_clean[i][4]) for i in range(len(fsnr_data_clean))])}
 
         # Dictionaries to contain the hour angles and offsets for each observation for each unique star
 
@@ -246,6 +256,13 @@ def import_logs():
                          3: {star: [] for star in unique_stars},
                          4: {star: [] for star in unique_stars},
                          5: {star: [] for star in unique_stars}}
+        
+        global dates_obsnum_dict
+        dates_obsnum_dict = {1: {star: [] for star in unique_stars},
+                         2: {star: [] for star in unique_stars},
+                         3: {star: [] for star in unique_stars},
+                         4: {star: [] for star in unique_stars},
+                         5: {star: [] for star in unique_stars}}
 
         
         
@@ -258,7 +275,10 @@ def import_logs():
                             offset_dict[j][star].append(all_offsets[j][i])
                             angles_dict[j][star].append(angles[i])
                             fsnr_dict[j][star].append(all_fsnrs[j][i])
-                            
+                            dates_obsnum_dict[j][star].append(dates_obsnum[i])
+
+        #print(dates_obsnum_dict)
+        
         # Calculate polynomial fits
         global polydict
         polydict = {1: {star: [] for star in unique_stars},
@@ -375,13 +395,24 @@ def plot_offsets(*args):
             if histvar.get() == 0 and starvar.get() != 'Pick a Star':
                 global plot1
                 plot1 = fig.add_subplot(111)
+                
+                global annot
+                annot = plot1.annotate("", xy=(0,0), xytext=(-75,-45),textcoords="offset points", fontsize=12,
+                bbox=dict(boxstyle="round", fc="w"),
+                arrowprops=dict(arrowstyle="->"))
+                annot.set_visible(False)
+                
+                global plot_objects
+                plot_objects = {}
         
                 # Scatter plot the hour angles and offsets for the star, also plot quadratic fit
                 for i in np.arange(1,6):
                     if i in baselines:
                         try:
                             xs = np.linspace(np.amin(angles_dict[i][star]) - 0.5, np.amax(angles_dict[i][star]) + 0.5, 1000)
-                            plot1.scatter(angles_dict[i][star], offset_dict[i][star], label='b' + str(i), c=colors[i])
+                            global sc
+                            sc = plot1.scatter(angles_dict[i][star], offset_dict[i][star], label='b' + str(i), c=colors[i],s=40)
+                            plot_objects[i] = sc
                             plot1.plot(xs, poly_calc(polydict[i][star][0], polydict[i][star][1], polydict[i][star][2], xs),c=colors[i])
                         except ValueError:
                             pass
@@ -436,6 +467,7 @@ def plot_offsets(*args):
     
     # redraw the canvas with updated plot
     canvas.draw()
+    
         
 def calculate_offsets(*args):
     '''Calculate and display the offset for a given star,
@@ -451,7 +483,7 @@ def calculate_offsets(*args):
         pass
     else:
         hour_angle = float(ha_var.get())
-        line1 = plot1.axvline(x=hour_angle,c='black')
+        plot1.axvline(x=hour_angle,c='black')
         for i in np.arange(1,6):
             if i in baselines:
                 try:
@@ -489,6 +521,8 @@ def save_plot():
     defaultextension='.png', title="Save File")
     if a:
         fig.savefig(a)
+        
+
 
 ##### CREATE GUI WIDGETS AND THEIR FUNCTION CALLBACKS #####
 instructions = """Welcome to PyBOC, the Python Baseline Offset Calculator tool for NPOI. To use, follow the instructions below:\n
@@ -567,9 +601,6 @@ ha_var.set('Hour Angle')
 ha_var.trace('w',calculate_offsets)
 
 ha_entry_box = Entry(star_ha_frame,textvariable=ha_var,width=15)
-# ha_entry_box.bind("<Return>", calculate_offsets)
-# ha_entry_box.bind("<FocusIn>", ha_focus)
-# ha_entry_box.bind("<FocusOut>", ha_outfocus)
 
 # Baseline offset checkboxes/value display
 bvar1 = IntVar(offset_frame)
@@ -635,14 +666,57 @@ histo_button = Checkbutton(offset_frame, text='Display FSNR\nHistograms', variab
 # Plotting area
 # the figure that will contain the plot
 fig = Figure(figsize=(6,5),dpi=100)
+canvas = FigureCanvasTkAgg(fig, master = plot_frame )
+
+def update_annot(ind,baseline):
+    #print('made it')
+    
+    star = starvar.get()
+    
+    ind_val = ind['ind'][0]
+    pos = plot_objects[baseline].get_offsets()[ind_val]
+    annot.xy = pos
+    text = dates_obsnum_dict[baseline][star][ind_val] 
+    
+    if baseline == 4:
+        annot.set_text(text)
+        annot.set_color('white')
+    else:
+        annot.set_text(text)
+        annot.set_color('black')
+    annot.get_bbox_patch().set_facecolor(colors[baseline])
+    annot.get_bbox_patch().set_alpha(0.5)
+
+def hover(event):
+    try:
+        vis = annot.get_visible()
+        if event.inaxes == plot1:
+            cont_ind = []
+            for i in list(plot_objects.keys()):
+                cont, ind = plot_objects[i].contains(event)
+                cont_ind.append((cont,ind,int(i)))
+    
+            for item in cont_ind:
+                if item[0] == True:
+                    update_annot(item[1],item[2])
+                    annot.set_visible(True)
+                    canvas.draw_idle()
+                else:
+                    if vis:
+                        annot.set_visible(False)
+                        canvas.draw_idle()
+    except NameError:
+        pass
+
+canvas.mpl_connect("motion_notify_event", hover)
 
 # creating the Tkinter canvas
 # containing the Matplotlib figure
-canvas = FigureCanvasTkAgg(fig, master = plot_frame )
+toolbar = NavigationToolbar2Tk(canvas, plot_frame)
+toolbar.update()
 
 # placing the canvas on the Tkinter window
 canvas.get_tk_widget().configure(highlightbackground='black',highlightthickness=2)
-
 ##### ARRANGE WIDGETS IN WINDOW #####
 
 date_frame.grid(row=0,column=0,columnspan=4,pady=5,padx=5)
@@ -669,7 +743,7 @@ creditlabel.grid(row=0,column=0)
 link1.grid(row=0,column=1)
 
 plot_frame.grid(row=0,rowspan=4,column=4,columnspan=1,padx=5,pady=5)
-canvas.get_tk_widget().grid(row=0,column=0)
+canvas.get_tk_widget().pack()
 
 star_ha_frame.grid(row=0,column=5,columnspan=2,padx=5,pady=5)
 dropdown_stars.grid(row=0,column=0)
