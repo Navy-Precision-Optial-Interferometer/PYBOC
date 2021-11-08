@@ -577,18 +577,20 @@ def update_annot(ind,baseline):
 def delete_confirm(event):
     '''Bring up a popup asking the user to confirm whether they
        want to delete a point from the plot after right clicking it'''
-       
-    points = hover(event)
-    
-    popup = Tk()
-    popup.wm_title("!")
-    label = Label(popup, text="Delete this point?")
-    label.pack(side="top", fill="x", pady=10)
-    B1 = Button(popup, text="Yes", command = lambda: delete_and_replot(points) or popup.destroy())
-    B1.pack()
-    B2 = Button(popup, text="No", command = popup.destroy)
-    B2.pack()
-    popup.mainloop()
+    if event.button == 3:
+        points = hover(event)
+        
+        popup = Tk()
+        popup.wm_title("!")
+        label = Label(popup, text="Delete this point?")
+        label.pack(side="top", fill="x", pady=10)
+        B1 = Button(popup, text="Yes", command = lambda: delete_and_replot(points) or popup.destroy())
+        B1.pack()
+        B2 = Button(popup, text="No", command = popup.destroy)
+        B2.pack()
+        popup.mainloop()
+    else:
+        pass
     
 def delete_and_replot(points):
     '''Delete selected point from the data dictionaries 
