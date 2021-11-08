@@ -14,18 +14,16 @@ from tkinter.filedialog import asksaveasfilename
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 from matplotlib.figure import Figure
 import webbrowser
-#from astroquery.simbad import Simbad
 from astropy.time import Time
 import astropy.units as u
-import astropy.coordinates as coords
 from itertools import repeat
+import astropy.coordinates as coords
 
 colors = ['black', 'lime', 'red', 'orange', 'blue', 'magenta']
 
 ##### FIND LOGS AND THEIR TIME RANGE #####
 
-app_path = os.getcwd()
-stardir = app_path #+ '/starlogs'
+stardir = 'Z:\\'
 os.chdir(stardir)
 
 files = []
@@ -94,7 +92,6 @@ def show_date(*args):
         pass
     
 def addlog():
-    # Note here that Tkinter passes an event object to onselect()
     indices = listbox.curselection()
     selected_logs = list(listbox2.get(0,END))
     for index in indices:
@@ -119,9 +116,6 @@ def remove():
     for index in indices:
         listbox2.delete(index)
     
-        
-    
-
 def import_logs():
     '''Import selected starlogs and sort data by star and offset,
     and calculate the polynomial fits for each one'''
@@ -154,7 +148,6 @@ def import_logs():
         data = []
         fsnr_data = []
         ut_dates = []
-        #print(ut_dates)
     
         # Pull in starlog data, skipping the header. Should work even for starlogs
         # with multiple headers.
@@ -186,6 +179,7 @@ def import_logs():
         data_clean = []
         fsnr_data_clean = []
         ut_dates_clean = []
+        
         for i in range(len(data)):
             for j in range(len(data[i])):
                 if len(data[i][j][1]) != 1:
@@ -198,12 +192,15 @@ def import_logs():
                     ut_dates_clean.append(ut_dates[i][j])
 
         # Make arrays of the star names, hour angles, and offsets for each individual entry
-        
         stars = np.array([data_clean[i][2] for i in range(len(data_clean))])
         unique_stars = list(set(stars))
         
+        
+        # Get right ascension values for all stars in the imported logs, to use
+        # for automated calculation of hour angles/offsets
         global star_ra
         star_ra ={}
+        
         for star in unique_stars:
             if star[0:3] == 'FKV':
                 star_query = 'fk5 ' + star[3:]
@@ -212,12 +209,22 @@ def import_logs():
 
             ra_hour = coords.SkyCoord.from_name(star_query).ra.hour            
             star_ra[star] = ra_hour
+            
+        # Populate star dropdown    
+        dropdown_stars['menu'].delete(0,'end')
+        for star in unique_stars:
+            dropdown_stars['menu'].add_command(label=star,command=lambda value=star: starvar.set(value))       
         
-        #print(star_ra)
+        # Pull out hour angles for all coherent observations
         angles = np.array([float(data_clean[i][4]) for i in range(len(data_clean))])
+        
+        # Pull out obs numbers for all coherent observations and attach them to
+        # their starlog filename, for annotating points on plots to tell
+        # which log they came from
         obs_numbers = np.array([int(data_clean[i][0]) for i in range(len(data_clean))])
         dates_obsnum = list(zip(ut_dates_clean, obs_numbers))
         
+        # Sort all coherent observation offsets into dictionary by baseline
         global all_offsets
         all_offsets = {1: np.array([float(data_clean[i][9]) for i in range(len(data_clean))]),
                        2: np.array([float(data_clean[i][10]) for i in range(len(data_clean))]),
@@ -225,7 +232,7 @@ def import_logs():
                        4: np.array([float(data_clean[i][12]) for i in range(len(data_clean))]),
                        5: np.array([float(data_clean[i][13]) for i in range(len(data_clean))])}
         
-        # Make arrays of the fsnrs for each baseline
+        # Sort all coherent observation fsnrs into dictionary by baseline
         global all_fsnrs
         all_fsnrs = {1: np.array([float(fsnr_data_clean[i][0]) for i in range(len(fsnr_data_clean))]),
                      2: np.array([float(fsnr_data_clean[i][1]) for i in range(len(fsnr_data_clean))]),
@@ -233,7 +240,11 @@ def import_logs():
                      4: np.array([float(fsnr_data_clean[i][3]) for i in range(len(fsnr_data_clean))]),
                      5: np.array([float(fsnr_data_clean[i][4]) for i in range(len(fsnr_data_clean))])}
 
-        # Dictionaries to contain the hour angles and offsets for each observation for each unique star
+        # Dictionaries to contain the hour angles, offsets
+        # fsnrs, and the starlog name/obsnum tuples
+        # for each observation for each unique star
+        # Also a dictionary for the quadratic fit coefficients
+        # for the baseline offsets per baseline and star
 
         global offset_dict
         offset_dict = {1: {star: [] for star in unique_stars},
@@ -249,7 +260,6 @@ def import_logs():
                          4: {star: [] for star in unique_stars},
                          5: {star: [] for star in unique_stars}}
 
-        # Dictionaries to contain fsnrs for each observation
         global fsnr_dict
         fsnr_dict = {1: {star: [] for star in unique_stars},
                          2: {star: [] for star in unique_stars},
@@ -263,10 +273,15 @@ def import_logs():
                          3: {star: [] for star in unique_stars},
                          4: {star: [] for star in unique_stars},
                          5: {star: [] for star in unique_stars}}
+                            
+        global polydict
+        polydict = {1: {star: [] for star in unique_stars},
+                    2: {star: [] for star in unique_stars},
+                    3: {star: [] for star in unique_stars},
+                    4: {star: [] for star in unique_stars},
+                    5: {star: [] for star in unique_stars}}
 
-        
-        
-        # Sort the starlog entries into the dictionaries
+        # Sort the data into the dictionaries by baseline and star
         for star in unique_stars:
             for i in range(len(stars)):
                 if stars[i] == star:
@@ -276,29 +291,15 @@ def import_logs():
                             angles_dict[j][star].append(angles[i])
                             fsnr_dict[j][star].append(all_fsnrs[j][i])
                             dates_obsnum_dict[j][star].append(dates_obsnum[i])
-
-        #print(dates_obsnum_dict)
         
-        # Calculate polynomial fits
-        global polydict
-        polydict = {1: {star: [] for star in unique_stars},
-                    2: {star: [] for star in unique_stars},
-                    3: {star: [] for star in unique_stars},
-                    4: {star: [] for star in unique_stars},
-                    5: {star: [] for star in unique_stars}}
-        
+        # Calculate quadratic fits to the baseline offsets, store coefficients
+        # by star and baseline
         for star in unique_stars:
             for i in np.arange(1,6):
                 try:
                     polydict[i][star] = np.polyfit(angles_dict[i][star], offset_dict[i][star],2)
                 except TypeError:
                     pass
-
-
-        # Populate star dropdown    
-        dropdown_stars['menu'].delete(0,'end')
-        for star in unique_stars:
-            dropdown_stars['menu'].add_command(label=star,command=lambda value=star: starvar.set(value))       
     else:
         pass
     
@@ -307,7 +308,6 @@ def poly_calc(a, b, c, x):
     return (a * x**2) + (b*x) + c
 
 def clear_selection():
-    
     '''Clear all selections except date range.'''
     
     # Deselect all offset checkboxes and reset text to default
@@ -340,12 +340,12 @@ def clear_selection():
     window.focus()
     
 def selected_baselines(*args):
-
    '''Keep track of which offsets are selected. If one is,
    give a raised relief to the checkbox. If one isn't, flatten
-   it and reset text to default'''
+   the checkbox and reset text to default'''
 
    selected = []
+   
    if bvar1.get() == 1:
        selected.append(1)
        R1.configure(relief='raised')
@@ -375,7 +375,6 @@ def selected_baselines(*args):
    return selected
 
 def plot_offsets(*args):
-    
     '''Plot the offset data and quadratic fits for each
     selected baseline, or plot histograms of the fsnrs
     for a target if the option is selected'''
@@ -396,7 +395,7 @@ def plot_offsets(*args):
                 global plot1
                 plot1 = fig.add_subplot(111)
                 
-                global annot
+                global annot # annotate point mouse is hovering over with starlog file name/obs number
                 annot = plot1.annotate("", xy=(0,0), xytext=(-75,-45),textcoords="offset points", fontsize=12,
                 bbox=dict(boxstyle="round", fc="w"),
                 arrowprops=dict(arrowstyle="->"))
@@ -461,13 +460,13 @@ def plot_offsets(*args):
                 plot2.set_xlabel('FSNR', fontsize=12)
                 plot2.axes.tick_params(labelsize=10)
                 plot2.axes.legend(fontsize=8,frameon=False)
+                
     except NameError or KeyError:
         fig.clear()
         pass
     
     # redraw the canvas with updated plot
-    canvas.draw()
-    
+    canvas.draw()    
         
 def calculate_offsets(*args):
     '''Calculate and display the offset for a given star,
@@ -481,7 +480,7 @@ def calculate_offsets(*args):
     
     if ha_var.get() == 'Hour Angle' or ha_var.get() == '' or star=='Pick a Star' or len(baselines) == 0: # do nothing if no hour angle supplied yet
         pass
-    else:
+    else: # calculate and display current offset value for selected baselines
         hour_angle = float(ha_var.get())
         plot1.axvline(x=hour_angle,c='black')
         for i in np.arange(1,6):
@@ -500,6 +499,9 @@ def calculate_offsets(*args):
     canvas.draw()
     
 def get_hour_angle(*args):
+    '''Calculate current hour angle of selected star
+       based on current time and its right ascension
+       and display it. Updates every 10 seconds'''
     
     star = starvar.get()
     
@@ -508,33 +510,126 @@ def get_hour_angle(*args):
         LST = coords.Angle(t.sidereal_time('apparent')).hour
         ra = star_ra[star]
         hour_angle = LST - ra
+        
         if hour_angle < -12:
             hour_angle += 24
         elif hour_angle > 12:
             hour_angle -= 24
+            
         ha_var.set(str(round(hour_angle, 3)))
         
         ha_entry_box.after(10000,get_hour_angle)
+        
+def hover(event):
+    '''Identify the data point being hovered over on the plot by
+    baseline and index in the array of offsets for that baseline
+    for that star'''
+    
+    selected_point = []
+    try:
+        vis = annot.get_visible()
+        if event.inaxes == plot1:
+            cont_ind = []
+            
+            for i in list(plot_objects.keys()):
+                cont, ind = plot_objects[i].contains(event)
+                cont_ind.append((cont,ind,int(i)))
+    
+            for item in cont_ind:
+                if item[0] == True:
+                    update_annot(item[1],item[2])
+                    selected_point.append((item[1],item[2]))
+                    annot.set_visible(True)
+                    canvas.draw_idle()
+                else:
+                    if vis:
+                        annot.set_visible(False)
+                        canvas.draw_idle()
+    except NameError:
+        pass
+    if len(selected_point) == 0:
+        pass
+    else:
+        return selected_point
+        
+def update_annot(ind,baseline):
+    '''Annotate point being hovered over with
+       its starlog file name and obs number'''
+    
+    star = starvar.get()
+    
+    ind_val = ind['ind'][0]
+    pos = plot_objects[baseline].get_offsets()[ind_val]
+    annot.xy = pos
+    text = dates_obsnum_dict[baseline][star][ind_val] 
+    
+    if baseline == 4:
+        annot.set_text(text)
+        annot.set_color('white')
+    else:
+        annot.set_text(text)
+        annot.set_color('black')
+        
+    annot.get_bbox_patch().set_facecolor(colors[baseline])
+    annot.get_bbox_patch().set_alpha(0.5)
+
+
+def delete_confirm(event):
+    '''Bring up a popup asking the user to confirm whether they
+       want to delete a point from the plot after right clicking it'''
+       
+    points = hover(event)
+    
+    popup = Tk()
+    popup.wm_title("!")
+    label = Label(popup, text="Delete this point?")
+    label.pack(side="top", fill="x", pady=10)
+    B1 = Button(popup, text="Yes", command = lambda: delete_and_replot(points) or popup.destroy())
+    B1.pack()
+    B2 = Button(popup, text="No", command = popup.destroy)
+    B2.pack()
+    popup.mainloop()
+    
+def delete_and_replot(points):
+    '''Delete selected point from the data dictionaries 
+    - NOT from the starlog data file -
+    recalculate the associated polynomial fits and current offsets,
+    and redraw the plot'''
+    
+    star = starvar.get()
+
+    for point in points:
+        
+        offset_dict[point[1]][star] = np.delete(offset_dict[point[1]][star], point[0]['ind'][0])
+        angles_dict[point[1]][star] = np.delete(angles_dict[point[1]][star], point[0]['ind'][0])
+        polydict[point[1]][star] = np.polyfit(angles_dict[point[1]][star], offset_dict[point[1]][star],2)
+
+    plot_offsets()
+    calculate_offsets()
     
 def save_plot():
+    '''Open file dialog to allow user to save currently displayed plot'''
+    
     a = asksaveasfilename(filetypes=(("PNG Image", "*.png"),("All Files", "*.*")), 
     defaultextension='.png', title="Save File")
     if a:
         fig.savefig(a)
         
-
-
+def creditlink(url):
+    '''Open Confluence documentation page in web browser'''
+    webbrowser.open_new(url)
+        
 ##### CREATE GUI WIDGETS AND THEIR FUNCTION CALLBACKS #####
 instructions = """Welcome to PyBOC, the Python Baseline Offset Calculator tool for NPOI. To use, follow the instructions below:\n
 1. Select the date range containing the starLogs you wish to use.
 2. Add or remove starLogs from your selection using the buttons, then click 'Import Logs.'
 3. Select the star and baselines to calculate offsets for.
-5. The current hour angle and selected offsets will be calculated/displayed, and willupdate every 10 seconds.
-6. Select 'Display FSNR Histograms' to show a histogram of the FSNRs for a target on the selected baselines.
-7. Use 'Save Figure' to save the currently displayed figure."""
+5. The current hour angle and selected offsets will be calculated/displayed, and will update every 10 seconds.
+6. Hover over a point to display its starlog file name and observation number;\nright click a point to delete it and recalculate the fits/offsets.
+7. Select 'Display FSNR Histograms' to show a histogram of the FSNRs for a target on the selected baselines.
+8. Use 'Save Figure' to save the currently displayed figure."""
 
-    
-T1 = Label(date_frame,height=10,width=95,text=instructions,borderwidth=2,relief='solid')
+T1 = Label(date_frame,height=11,width=95,text=instructions,borderwidth=2,relief='solid')
 
 # Date range dropdowns    
 yearvar = StringVar(date_frame)
@@ -567,9 +662,6 @@ dropdown_months2.config(width=12)
 # Boxes for all logs in date range and then selected logs in range
 listbox = Listbox(selection_frame, width=35, height=10, selectmode='extended')
 listbox2 = Listbox(selection_frame,width=35, height=10, selectmode='multiple')
-
-def creditlink(url):
-    webbrowser.open_new(url)
     
 creditlabel = Label(credit_frame, text='PYBOC developed 2021 by Erin Maier. For documentation/help, see the NPOI Confluence space:', font=('',9,'italic'))
 
@@ -628,6 +720,8 @@ R5 = Checkbutton(offset_frame, text="b5: -1.000", variable=bvar5, onvalue=5, off
                   command=calculate_offsets,activebackground='magenta',bg='magenta', fg='black',selectcolor='silver',bd=5,width=10)
 
 offlabel = Label(offset_frame, text="Calculated\nOffsets\n(mm)")
+
+# Entry boxes for user-defined additional offsets per baseline
 offlabel2 = Label(offset_frame, text="Additional\nOffset\n(microns)")
 
 off1 = StringVar(offset_frame)
@@ -655,8 +749,10 @@ off5.set('0')
 off5.trace('w',calculate_offsets)
 offset5box = Entry(offset_frame,textvariable=off5,width=5)
 
+# Lists of checkbox and entry box objects for selection/deselection purposes
 check_list = [R1, R2, R3, R4, R5]
 off_list = [off1, off2, off3, off4, off5]
+
 # Histogram checkbox 
 histvar=IntVar(offset_frame)
 hist_trace = histvar.trace('w',plot_offsets)
@@ -666,57 +762,17 @@ histo_button = Checkbutton(offset_frame, text='Display FSNR\nHistograms', variab
 # Plotting area
 # the figure that will contain the plot
 fig = Figure(figsize=(6,5),dpi=100)
-canvas = FigureCanvasTkAgg(fig, master = plot_frame )
-
-def update_annot(ind,baseline):
-    #print('made it')
-    
-    star = starvar.get()
-    
-    ind_val = ind['ind'][0]
-    pos = plot_objects[baseline].get_offsets()[ind_val]
-    annot.xy = pos
-    text = dates_obsnum_dict[baseline][star][ind_val] 
-    
-    if baseline == 4:
-        annot.set_text(text)
-        annot.set_color('white')
-    else:
-        annot.set_text(text)
-        annot.set_color('black')
-    annot.get_bbox_patch().set_facecolor(colors[baseline])
-    annot.get_bbox_patch().set_alpha(0.5)
-
-def hover(event):
-    try:
-        vis = annot.get_visible()
-        if event.inaxes == plot1:
-            cont_ind = []
-            for i in list(plot_objects.keys()):
-                cont, ind = plot_objects[i].contains(event)
-                cont_ind.append((cont,ind,int(i)))
-    
-            for item in cont_ind:
-                if item[0] == True:
-                    update_annot(item[1],item[2])
-                    annot.set_visible(True)
-                    canvas.draw_idle()
-                else:
-                    if vis:
-                        annot.set_visible(False)
-                        canvas.draw_idle()
-    except NameError:
-        pass
-
-canvas.mpl_connect("motion_notify_event", hover)
-
-# creating the Tkinter canvas
-# containing the Matplotlib figure
+canvas = FigureCanvasTkAgg(fig, master = plot_frame)
 toolbar = NavigationToolbar2Tk(canvas, plot_frame)
 toolbar.update()
 
+# Callbacks to hover annotation and point deletion functions
+canvas.mpl_connect("motion_notify_event", hover)
+canvas.mpl_connect("button_release_event", delete_confirm)
+
 # placing the canvas on the Tkinter window
 canvas.get_tk_widget().configure(highlightbackground='black',highlightthickness=2)
+
 ##### ARRANGE WIDGETS IN WINDOW #####
 
 date_frame.grid(row=0,column=0,columnspan=4,pady=5,padx=5)
@@ -726,9 +782,9 @@ dropdown_months.grid(row=1,column=1)
 dropdown_year2.grid(row=1,column=2)
 dropdown_months2.grid(row=1,column=3)
 
-selection_frame.grid(row=1, column=0,columnspan=4,pady=5,padx=5)
-label_avail.grid(row=0,column=0,padx=5,pady=5)
-label_select.grid(row=0,column=2,padx=5,pady=5)
+selection_frame.grid(row=1, column=0,columnspan=4,padx=5)
+label_avail.grid(row=0,column=0,padx=5)
+label_select.grid(row=0,column=2,padx=5)
 listbox.grid(row=1,rowspan=5,column=0,padx=5)
 listbox2.grid(row=1,rowspan=5,column=2,padx=5)
 
