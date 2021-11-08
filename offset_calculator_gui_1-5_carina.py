@@ -577,9 +577,9 @@ def update_annot(ind,baseline):
 def delete_confirm(event):
     '''Bring up a popup asking the user to confirm whether they
        want to delete a point from the plot after right clicking it'''
-    if event.button == 3:
-        points = hover(event)
-        
+    points = hover(event)
+    
+    if event.button == 3 and points != None: 
         popup = Tk()
         popup.wm_title("!")
         label = Label(popup, text="Delete this point?")
