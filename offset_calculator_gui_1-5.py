@@ -375,6 +375,19 @@ def selected_baselines(*args):
     
    return selected
 
+def detect_baselines(*args):
+    '''When selecting a star, automatically detect which
+    baselines have data and display those plots/fits. User
+    can select/deselect at will from there.'''
+    
+    star = starvar.get()
+    if star == 'Pick a Star':
+        pass
+    else:
+        for i in np.arange(1,6):
+            if len(offset_dict[i][star]) != 0:
+                check_list[i-1].select()
+
 def plot_offsets(*args):
     '''Plot the offset data and quadratic fits for each
     selected baseline, or plot histograms of the fsnrs
@@ -382,6 +395,7 @@ def plot_offsets(*args):
 
     # Clear the figure
     fig.clear()
+        
     
     # Get selected baselines and star
     baselines = selected_baselines()
@@ -626,7 +640,7 @@ def creditlink(url):
 instructions = """Welcome to PyBOC, the Python Baseline Offset Calculator tool for NPOI. To use, follow the instructions below:\n
 1. Select the date range containing the starLogs you wish to use.
 2. Add or remove starLogs from your selection using the buttons, then click 'Import Logs.'
-3. Select the star and baselines to calculate offsets for.
+3. Select a star; all baselines with data available will be displayed, and you may select/deselect at will.
 5. The current hour angle and selected offsets will be calculated/displayed, and will update every 10 seconds.
 6. Hover over a point to display its starlog file name and observation number;\nright click a point to delete it and recalculate the fits/offsets.
 7. Select 'Display FSNR Histograms' to show a histogram of the FSNRs for a target on the selected baselines.
@@ -687,6 +701,7 @@ global startrace; global startrace_offset
 startrace = starvar.trace('w',plot_offsets)
 startrace_offset = starvar.trace('w',calculate_offsets)
 startrace_hour = starvar.trace('w',get_hour_angle)
+startrace_baselines = starvar.trace('w',detect_baselines)
 
 dropdown_stars = OptionMenu(star_ha_frame,starvar,*unique_stars)
 dropdown_stars.config(width=10)
