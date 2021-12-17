@@ -2,6 +2,12 @@
 
 # Changelog for offset_calculator_gui-1-5.py and PYBOC.exe
 
+12/17/2021 - all requested features have now been implemented
+1. Local data point deletion is now supported; right clicking a data point will prompt the user to confirm whether they want to delete it, and if yes, the point will be removed and the polynomial fit/offset estimate automatically updated. **This point deletion is LOCAL and will only persist in the current session of PYBOC; it must be done again if PYBOC is reopened. To permanently delete a point use the hover annotations to identify its starlog file and obs number and then manually delete it from the file.**
+2. Carina now has a starlog archive file that will automatically update once per day. A separately compiled version of PYBOC is available that accomodates for the different directory/file structure of this archive.
+3. The plot area now has the ipython navigation toolbar, however at present any zooming/panning/view modifications will be reset every time the hour angle/offset calculation updates.
+4. Upon selecting a star all available data for that star in the imported logs will now be displayed; the user can then deselect/select baselines at will. Allows for more immediate confirmation of successful import/overview of data.
+
 10/19/2021
 1. Additional input boxes added next to the offset checkboxes to allow for adding an extra "diurnal" offset - e.g., if the offsets you are finding seem to be consistently about 200 microns off from what PYBOC is predicting, you can put that in these boxes and PYBOC will account for it.
 2. If you hover over a data point on the plot, it will now display an annotation containing the name of the starlog file the data point came from and its observation number. This is to allow easy idenfitication and manual deletion of outlier points, since programmatic deletion proved very difficult.
